@@ -61,7 +61,8 @@
 		</div>
 	</div>
 	<div v-if="loginBg">
-		<img :src="loginBg" class="loginBg fixed inset-0 z-1 w-full h-full" />
+		<img :src="loginBg" class="loginBg fixed z-1 w-full" 
+			style="height: 100vh; object-fit: cover; object-position: center; top: 50%; left: 50%; transform: translate(-50%, -50%);" />
 	</div>
 </template>
 
