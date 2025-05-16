@@ -61,8 +61,8 @@
 		</div>
 	</div>
 	<div v-if="loginBg">
-		<img :src="loginBg" class="loginBg fixed z-1 w-full" 
-			style="height: 100vh; object-fit: cover; object-position: center; top: 50%; left: 50%; transform: translate(-50%, -50%);" />
+		<img :src="loginBg" class="loginBg fixed z-1" 
+			style="width: 80%; max-height: 80vh; object-fit: contain; top: 50%; left: 30%; transform: translate(-50%, -50%);" />
 	</div>
 </template>
 
@@ -136,7 +136,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .login-container {
 	height: 100%;
-	background: var(--el-color-white);
+	background: var(--el-color-info-light-9); // 修改这里，添加淡灰色底色
 
 	.login-left {
 		flex: 1;
@@ -202,13 +202,19 @@ onMounted(() => {
 
 		.login-right-warp {
 			//border: 1px solid var(--el-color-primary-light-3);
-			border-radius: 3px;
+			border-radius: 10px; // 增加圆角
 			width: 500px;
 			height: 500px;
 			position: relative;
 			overflow: hidden;
-			//background-color: var(--el-color-white);
-
+			background-color: var(--el-color-white); // 添加白色背景
+			box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); // 添加阴影效果
+			transition: all 0.3s ease; // 添加过渡效果
+			
+			&:hover {
+				box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15); // 悬停时增强阴影效果
+				transform: translateY(-5px); // 悬停时轻微上浮
+			}
 			.login-right-warp-one,
 			.login-right-warp-two {
 				position: absolute;
