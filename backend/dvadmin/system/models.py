@@ -670,3 +670,39 @@ class DownloadCenter(CoreModel):
         verbose_name = "下载中心"
         verbose_name_plural = verbose_name
         ordering = ("-create_datetime",)
+
+
+class ResumeFile(CoreModel):
+    """
+    简历文件模型
+    """
+    name = models.CharField(max_length=200, null=True, blank=True, verbose_name="文件名称", help_text="文件名称")
+    url = models.FileField(upload_to=media_file_name, null=True, blank=True, verbose_name="文件")
+    file_url = models.CharField(max_length=255, blank=True, verbose_name="文件地址", help_text="文件地址")
+    engine = models.CharField(max_length=100, default='local', blank=True, verbose_name="存储引擎", help_text="存储引擎")
+    mime_type = models.CharField(max_length=100, blank=True, verbose_name="Mime类型", help_text="Mime类型")
+    size = models.CharField(max_length=36, blank=True, verbose_name="文件大小", help_text="文件大小")
+    md5sum = models.CharField(max_length=36, blank=True, verbose_name="文件md5", help_text="文件md5")
+    candidate_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="候选人姓名", help_text="候选人姓名")
+    position = models.CharField(max_length=100, blank=True, null=True, verbose_name="应聘职位", help_text="应聘职位")
+    status = models.IntegerField(default=0, verbose_name="处理状态", help_text="处理状态", 
+                               choices=((0, "未处理"), (1, "已查看"), (2, "已联系"), (3, "已面试"), (4, "已录用"), (5, "已拒绝")))
+    
+    def save(self, *args, **kwargs):
+        if not self.md5sum and self.url:  # 文件是新的
+            md5 = hashlib.md5()
+            for chunk in self.url.chunks():
+                md5.update(chunk)
+            self.md5sum = md5.hexdigest()
+        if not self.size and self.url:
+            self.size = self.url.size
+        if not self.file_url and self.url:
+            url = media_file_name(self, self.name)
+            self.file_url = f'media/{url}'
+        super(ResumeFile, self).save(*args, **kwargs)
+
+    class Meta:
+        db_table = table_prefix + "system_resume_file"
+        verbose_name = "简历文件管理"
+        verbose_name_plural = verbose_name
+        ordering = ("-create_datetime",)

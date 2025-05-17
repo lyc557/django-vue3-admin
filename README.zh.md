@@ -138,6 +138,7 @@ yarn install --registry=https://registry.npmmirror.com
 
 # 启动服务
 yarn build
+yarn dev
 # 浏览器访问 http://localhost:8080
 # .env.development 文件中可配置启动端口等参数
 # 构建生产环境
@@ -175,74 +176,3 @@ yarn build
 
 - 访问地址：[http://localhost:8080](http://localhost:8080) (默认为此地址，如有修改请按照配置文件)
 - 账号：`superadmin` 密码：`admin123456`
-
-
-
-
-
-### docker-compose 运行
-
-~~~shell
-# 先安装docker-compose (自行百度安装),执行此命令等待安装，如有使用celery插件请打开docker-compose.yml中celery 部分注释
-docker-compose up -d
-# 初始化后端数据(第一次执行即可)
-docker exec -ti dvadmin3-django bash
-python manage.py makemigrations 
-python manage.py migrate
-python manage.py init_area
-python manage.py init
-exit
-
-前端地址：http://127.0.0.1:8080
-后端地址：http://127.0.0.1:8080/api
-# 在服务器上请把127.0.0.1 换成自己公网ip
-账号：superadmin 密码：admin123456
-
-# docker-compose 停止
-docker-compose down
-#  docker-compose 重启
-docker-compose restart
-#  docker-compose 启动时重新进行 build
-docker-compose up -d --build
-~~~
-
-
-
-## 演示图✅
-
-![image-01](https://foruda.gitee.com/images/1701348994587355489/1bc749e7_5074988.png)
-
-![image-02](https://foruda.gitee.com/images/1701349037811908960/80d361db_5074988.png)
-
-![image-03](https://foruda.gitee.com/images/1701349224478845203/954f0a7b_5074988.png)
-
-![image-04](https://foruda.gitee.com/images/1701349248928658877/64926724_5074988.png)
-
-![image-05](https://foruda.gitee.com/images/1701349259068943299/1306ba40_5074988.png)
-
-![image-06](https://foruda.gitee.com/images/1701349294894429495/e3b3a8cf_5074988.png)
-
-![image-07](https://foruda.gitee.com/images/1701350432536247561/3b26685e_5074988.png)
-
-![image-08](https://foruda.gitee.com/images/1701350455264771992/b364c57f_5074988.png)
-
-![image-09](https://foruda.gitee.com/images/1701350479266000753/e4e4f7c5_5074988.png)
-
-![image-10](https://foruda.gitee.com/images/1701350501421625746/f8dd215e_5074988.png)
-
-## 审批流插件
-
-![输入链接说明](https://bbs.django-vue-admin.com/uploads/20250321/97fbbf29673edfd66a1edd49237791bb.png)
-
-![输入链接说明](https://bbs.django-vue-admin.com/uploads/20250321/c43aa51278cbc478287c718d22397479.png)
-
-
-![输入链接说明](https://bbs.django-vue-admin.com/uploads/20250321/9732a5cca9c1166d1a65c35e313ab90d.png)
-
-
-![输入链接说明](https://bbs.django-vue-admin.com/uploads/20250321/3ca9dd0801ce76d21435abcc8a3d505a.png)
-
-![输入链接说明](https://bbs.django-vue-admin.com/uploads/20250321/a87a8d2329ef66880af5b0f16c5ff823.png)
-
-
-

@@ -78,18 +78,19 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue';
+  import { ref, computed, watch } from 'vue';
   import { UploadFilled } from '@element-plus/icons-vue';
-  import axios from 'axios';
-  import { ElMessage } from 'element-plus';
+  import { ElMessage, ElMessageBox } from 'element-plus';
   import { debounce } from 'lodash-es';
+  import { UploadResume, AnalyzeResume } from './api';
+  import { successNotification } from '/@/utils/message';
   
+  import { getBaseURL } from '/@/utils/baseUrl';
+
   // 从环境变量获取后端地址
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const UPLOAD_API = `${API_BASE_URL}/api/upload`;  // 保持不变
-  const ANALYZE_API = `${API_BASE_URL}/api/analyze`;  // 保持不变
+  const UPLOAD_API = `${getBaseURL()}api/upload`;  // 使用getBaseURL方法获取基础URL
   
-const jobDescription = ref(`你是一位经验丰富的 HR 招聘专家，请根据以下六个维度对上传的简历进行全面评分，总分为 100 分。请分别对每个维度进行打分，并在最后给出总评分及简要评语。
+  const jobDescription = ref(`你是一位经验丰富的 HR 招聘专家，请根据以下六个维度对上传的简历进行全面评分，总分为 100 分。请分别对每个维度进行打分，并在最后给出总评分及简要评语。
 注意：无需参考任何具体岗位，仅从通用就业能力与简历质量角度进行评价。
 评分维度如下：
 1. 简历排版与清晰度（10 分）：版式是否清晰、有逻辑结构、有无明显错别字或排版混乱。
@@ -122,16 +123,27 @@ const jobDescription = ref(`你是一位经验丰富的 HR 招聘专家，请根
     score: 0,
     scoreDetails: ''
   });
-  const extraParams = {
-    job_description: jobDescription.value
-  };
   
-  const handleFileChange = debounce((file, files, extraParams) => {
+  // 计算属性，根据jobDescription的变化更新extraParams
+  const extraParams = computed(() => {
+    return {
+      job_description: jobDescription.value
+    };
+  });
+  
+  /**
+   * 处理文件变更事件
+   * @param {Object} file - 上传的文件对象
+   * @param {Array} files - 文件列表
+   */
+  const handleFileChange = debounce(async (file, files) => {
     console.log('file.status:', file.status);
     if (file.status === 'success') {
       fileList.value = files;
-      if (file.response && file.response.parsed_data) {
-        const parsedData = file.response.parsed_data;
+      
+      // 检查响应是否符合API规范
+      if (file.response && file.response.code === 2000 && file.response.data) {
+        const parsedData = file.response.data;
         resumeData.value = {
           name: parsedData.name || '',
           phone: parsedData.phone || '',
@@ -144,10 +156,23 @@ const jobDescription = ref(`你是一位经验丰富的 HR 招聘专家，请根
           score: parsedData.score || 0,
           scoreDetails: parsedData.score_details || ''
         };
+        
+        // 显示成功通知
+        successNotification('简历解析成功');
+      } else {
+        // 处理错误情况
+        ElMessage.error(file.response?.msg || '简历解析失败');
       }
+    } else if (file.status === 'error') {
+      ElMessage.error('文件上传失败，请重试');
     }
   }, 500);
   
+  /**
+   * 上传前的文件验证
+   * @param {Object} file - 待上传的文件
+   * @returns {Boolean} - 是否允许上传
+   */
   const beforeUpload = (file) => {
     const allowedTypes = [
       'application/pdf',
@@ -163,15 +188,57 @@ const jobDescription = ref(`你是一位经验丰富的 HR 招聘专家，请根
     return true;
   };
   
-  // 跳转到简历列表页面
-  const openResumeSearchPage = () => {
-    window.location.href = '/resume-search';
+  /**
+   * 手动分析简历内容
+   * @param {String} fileId - 文件ID
+   */
+  const analyzeResume = async (fileId) => {
+    try {
+      const res = await AnalyzeResume({
+        file_id: fileId,
+        job_description: jobDescription.value
+      });
+      
+      if (res.code === 2000) {
+        const parsedData = res.data;
+        resumeData.value = {
+          // ... 更新简历数据
+          name: parsedData.name || '',
+          phone: parsedData.phone || '',
+          email: parsedData.email || '',
+          education: parsedData.education || '',
+          experience: parsedData.work_experience || [],
+          skills: parsedData.skills || [],
+          projects: parsedData.projects || [],
+          other: parsedData.other || '',
+          score: parsedData.score || 0,
+          scoreDetails: parsedData.score_details || ''
+        };
+        successNotification(res.msg || '简历分析成功');
+      } else {
+        ElMessage.error(res.msg || '简历分析失败');
+      }
+    } catch (error) {
+      console.error('分析简历时出错:', error);
+      ElMessage.error('分析简历时出错');
+    }
   };
+  
+  /**
+   * 获取评分对应的颜色
+   * @param {Number} score - 评分值
+   * @returns {String} - 对应的颜色代码
+   */
   const getScoreColor = (score) => {
     if (score >= 90) return '#67C23A'; // 优秀 - 绿色
     if (score >= 60) return '#E6A23C'; // 合格 - 黄色
     return '#F56C6C'; // 不合格 - 红色
   };
+  
+  // 监听jobDescription变化，更新extraParams
+  watch(jobDescription, (newVal) => {
+    console.log('jobDescription changed:', newVal);
+  });
   </script>
   
   <style scoped>
