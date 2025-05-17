@@ -114,6 +114,8 @@ urlpatterns = (
             path("api/token/", LoginTokenView.as_view()),
             # 前端页面映射
             path('web/', web_view, name='web_view'),
+            # hrms 
+            path('api/hrms/', include('dvadmin.hrms.urls')),
             path('web/<path:filename>', serve_web_files, name='serve_web_files'),
         ]
         + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

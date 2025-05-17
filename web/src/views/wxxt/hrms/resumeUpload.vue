@@ -88,7 +88,7 @@
   import { getBaseURL } from '/@/utils/baseUrl';
 
   // 从环境变量获取后端地址
-  const UPLOAD_API = `${getBaseURL()}api/upload`;  // 使用getBaseURL方法获取基础URL
+  const UPLOAD_API = `${getBaseURL()}api/hrms/resume/upload/`;  // 使用getBaseURL方法获取基础URL
   
   const jobDescription = ref(`你是一位经验丰富的 HR 招聘专家，请根据以下六个维度对上传的简历进行全面评分，总分为 100 分。请分别对每个维度进行打分，并在最后给出总评分及简要评语。
 注意：无需参考任何具体岗位，仅从通用就业能力与简历质量角度进行评价。

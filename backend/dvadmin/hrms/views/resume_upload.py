@@ -8,7 +8,7 @@
 
 from rest_framework import serializers
 
-from dvadmin.system.models import ResumeFile
+from dvadmin.hrms.models import ResumeFile
 from dvadmin.utils.serializers import CustomModelSerializer
 from dvadmin.utils.viewset import CustomModelViewSet
 from dvadmin.utils.json_response import DetailResponse, SuccessResponse

@@ -19,7 +19,6 @@ from dvadmin.system.views.system_config import SystemConfigViewSet
 from dvadmin.system.views.user import UserViewSet
 from dvadmin.system.views.menu_field import MenuFieldViewSet
 from dvadmin.system.views.download_center import DownloadCenterViewSet
-from dvadmin.system.views.resume_upload import ResumeFileViewSet
 
 system_url = routers.SimpleRouter()
 system_url.register(r'menu', MenuViewSet)
@@ -39,7 +38,6 @@ system_url.register(r'role_menu_permission', RoleMenuPermissionViewSet)
 system_url.register(r'column', MenuFieldViewSet)
 system_url.register(r'login_log', LoginLogViewSet)
 system_url.register(r'download_center', DownloadCenterViewSet)
-system_url.register(r'resume_file', ResumeFileViewSet)
 
 
 urlpatterns = [
@@ -54,6 +52,5 @@ urlpatterns = [
     # path('dept_lazy_tree/', DeptViewSet.as_view({'get': 'dept_lazy_tree'})),
     path('clause/privacy.html', PrivacyView.as_view()),
     path('clause/terms_service.html', TermsServiceView.as_view()),
-    path('upload/', ResumeFileViewSet.as_view({'post': 'upload_resume'})),
 ]
 urlpatterns += system_url.urls

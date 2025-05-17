@@ -7,7 +7,7 @@ import { request } from '/@/utils/service';
  */
 export function UploadResume(data) {
   return request({
-    url: '/api/upload',
+    url: '/api/hrms/resume/upload/',
     method: 'post',
     data,
   });
@@ -20,7 +20,7 @@ export function UploadResume(data) {
  */
 export function AnalyzeResume(data) {
   return request({
-    url: '/api/analyze',
+    url: '/api/hrms/resume/analyze',
     method: 'post',
     data,
   });
