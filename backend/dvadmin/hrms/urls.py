@@ -15,6 +15,6 @@ hrms_url.register(r'resume', ResumeFileViewSet)
 urlpatterns = [
     path('employee/export/', EmployeeViewSet.as_view({'post': 'export_data', })),
     path('employee/import/', EmployeeViewSet.as_view({'get': 'import_data', 'post': 'import_data'})),
-    path('resume/upload/', ResumeFileViewSet.as_view({'post': 'upload_resume', 'get': 'upload_resume'})),
+    path('resume/upload/', ResumeFileViewSet.as_view({'post': 'upload'})),
 ]
 urlpatterns += hrms_url.urls

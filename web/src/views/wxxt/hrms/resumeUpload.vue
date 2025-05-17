@@ -14,12 +14,11 @@
       <el-upload
         class="upload-demo"
         drag
-        :action="UPLOAD_API"
         :auto-upload="true"
         :file-list="fileList"
         :on-change="handleFileChange"
         :before-upload="beforeUpload"
-        :data="extraParams"
+        :http-request="customUpload"
         multiple
         accept=".pdf,.docx"
       >
@@ -77,7 +76,7 @@
     </div>
   </template>
   
-  <script setup>
+  <script lang="ts" setup name="resumeUpload">
   import { ref, computed, watch } from 'vue';
   import { UploadFilled } from '@element-plus/icons-vue';
   import { ElMessage, ElMessageBox } from 'element-plus';
@@ -239,6 +238,36 @@
   watch(jobDescription, (newVal) => {
     console.log('jobDescription changed:', newVal);
   });
+  /**
+   * 自定义上传方法
+   * @param {Object} options - 上传选项
+   */
+  const customUpload = (options) => {
+    const { file, data, onSuccess, onError } = options;
+    
+    // 创建FormData对象
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // 添加额外参数
+    if (extraParams.value) {
+      Object.keys(extraParams.value).forEach(key => {
+        formData.append(key, extraParams.value[key]);
+      });
+    }
+    
+    // 使用api.js中的方法上传，它会自动包含认证信息
+    UploadResume(formData)
+      .then(response => {
+        console.log('上传响应:', response);  // 添加日志
+        onSuccess(response);
+      })
+      .catch(error => {
+        console.error('上传错误:', error);  // 添加错误日志
+        onError(error);
+        ElMessage.error('文件上传失败，请重试');
+      });
+  };
   </script>
   
   <style scoped>

@@ -49,10 +49,11 @@ class ResumeFileViewSet(CustomModelViewSet):
     update_serializer_class = ResumeFileCreateUpdateSerializer
     filter_fields = ['name', 'candidate_name', 'position', 'status']
     search_fields = ['name', 'candidate_name', 'position']
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser]  # 确保这行存在
     
     @action(methods=['post'], detail=False, url_path='upload')
     def upload_resume(self, request):
+        print("----------------------------")
         """
         上传简历文件
         """
