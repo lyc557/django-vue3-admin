@@ -52,7 +52,7 @@ class ResumeFileViewSet(CustomModelViewSet):
     parser_classes = [MultiPartParser, FormParser]  # 确保这行存在
     
     @action(methods=['post'], detail=False, url_path='upload')
-    def upload_resume(self, request):
+    def upload(self, request):
         print("----------------------------")
         """
         上传简历文件

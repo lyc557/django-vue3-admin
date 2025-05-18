@@ -4,7 +4,7 @@ from rest_framework import routers
 from dvadmin.hrms.views.employee import EmployeeViewSet
 from dvadmin.hrms.views.attendance import AttendanceViewSet
 from dvadmin.hrms.views.leave import LeaveViewSet
-from dvadmin.hrms.views.resume_upload import ResumeFileViewSet
+from dvadmin.hrms.views.resume import ResumeFileViewSet
 
 hrms_url = routers.SimpleRouter()
 hrms_url.register(r'employee', EmployeeViewSet)

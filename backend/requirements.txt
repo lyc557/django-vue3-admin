@@ -30,3 +30,4 @@ gevent==25.5.1
 Pillow==10.4.0
 pyinstaller==6.13.0
 dvadmin3-celery==3.1.6
+daphne==4.2.0
