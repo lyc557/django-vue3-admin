@@ -1,4 +1,5 @@
 import { request } from '/@/utils/service';
+const apiPrefix = '/api/hrms/resume/';
 
 /**
  * 上传简历文件
@@ -6,7 +7,7 @@ import { request } from '/@/utils/service';
  */
 export function UploadResume(data: FormData){
   return request({
-    url: '/api/hrms/resume/upload/',
+    url: apiPrefix+'upload/',
     method: 'post',
     data,
     headers: {
@@ -21,7 +22,7 @@ export function UploadResume(data: FormData){
  */
 export function AnalyzeResume(data: { file_id: string; job_description?: string }){
   return request({
-    url: '/api/hrms/resume/analyze',
+    url: apiPrefix+'analyze',
     method: 'post',
     data,
   });
