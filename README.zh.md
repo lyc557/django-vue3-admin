@@ -165,9 +165,11 @@ yarn dev
 7. 初始化省市县数据:
 	python3 manage.py init_area
 8. 启动项目
+	# 开发环境执行
 	python3 manage.py runserver 0.0.0.0:8000
-或使用 uvicorn :
-  uvicorn application.asgi:application --port 8000 --host 0.0.0.0 --workers 8
+	# 生产环境执行
+	daphne -b 0.0.0.0 -p 8000 application.asgi:application
+  	uvicorn application.asgi:application --port 8000 --host 0.0.0.0 --workers 8
 ~~~
 ## 开发建议
 前后端backend与web各自单独一个窗口打开进行开发
