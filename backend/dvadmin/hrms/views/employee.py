@@ -4,9 +4,11 @@ from rest_framework.decorators import action
 
 from dvadmin.hrms.models import Employee
 from dvadmin.utils.serializers import CustomModelSerializer
-from dvadmin.utils.viewset import CustomModelViewSet
 from dvadmin.utils.json_response import DetailResponse, SuccessResponse
-
+from dvadmin.utils.field_permission import FieldPermissionMixin
+from dvadmin.utils.crud_mixin import FastCrudMixin
+from dvadmin.utils.viewset import CustomModelViewSet
+from dvadmin.utils.permission import CustomPermission
 
 class EmployeeSerializer(CustomModelSerializer):
     """
@@ -31,7 +33,7 @@ class EmployeeCreateUpdateSerializer(CustomModelSerializer):
         fields = '__all__'
 
 
-class EmployeeViewSet(CustomModelViewSet):
+class EmployeeViewSet(CustomModelViewSet, FastCrudMixin,FieldPermissionMixin):
     """
     员工管理接口
     list:查询
@@ -47,9 +49,6 @@ class EmployeeViewSet(CustomModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filter_fields = ['name', 'employee_id', 'status', 'dept', 'position']
 
-    def list(self, request, *args, **kwargs):
-        print("0000000000"+request.query_params)
-        return super().list(request, *args, **kwargs)
     
     @action(methods=['GET'], detail=False)
     def get_employee_count(self, request):
@@ -67,3 +66,25 @@ class EmployeeViewSet(CustomModelViewSet):
         }
         
         return DetailResponse(data=data, msg="获取成功")
+
+    def list(self, request, *args, **kwargs):
+        self.request.query_params._mutable = True
+        params = self.request.query_params
+        known_params = {'page', 'limit', 'pcode'}
+        # 使用集合操作检查是否有未知参数
+        other_params_exist = any(param not in known_params for param in params)
+        if other_params_exist:
+            queryset = self.queryset.filter(enable=True)
+        else:
+            pcode = params.get('pcode', None)
+            params['limit'] = 999
+            if params and pcode:
+                queryset = self.queryset.filter(enable=True, pcode=pcode)
+            else:
+                queryset = self.queryset.filter(enable=True, level=1)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, request=request)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True, request=request)
+        return SuccessResponse(data=serializer.data, msg="获取成功")

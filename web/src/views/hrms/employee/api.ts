@@ -76,7 +76,7 @@ export function GetObj(id: any) {
  */
 export function GetPermission() {
   return request({
-    url: apiPrefix + 'permission/',
+    url: apiPrefix + 'field_permission/',
     method: 'get'
   });
 }
