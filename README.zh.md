@@ -100,3 +100,6 @@ yarn dev
 
 - 访问地址：[http://localhost:8080](http://localhost:8080) (默认为此地址，如有修改请按照配置文件)
 - 账号：`superadmin` 密码：`admin123456`
+
+# 杀相关进程
+lsof -i :8000 | awk 'NR>1 {print $2}' | xargs kill -9      

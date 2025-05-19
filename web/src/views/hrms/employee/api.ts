@@ -6,6 +6,11 @@ import { request } from '/@/utils/service';
 
 export const apiPrefix = '/api/hrms/employee/';
 
+/**
+ * 获取员工列表数据
+ * @param query 查询参数
+ * @returns 员工列表数据
+ */
 export function GetList(query: any) {
   return request({
     url: apiPrefix,
@@ -14,6 +19,11 @@ export function GetList(query: any) {
   });
 }
 
+/**
+ * 添加员工
+ * @param obj 员工数据
+ * @returns 添加结果
+ */
 export function AddObj(obj: any) {
   return request({
     url: apiPrefix,
@@ -22,6 +32,11 @@ export function AddObj(obj: any) {
   });
 }
 
+/**
+ * 更新员工信息
+ * @param obj 员工数据
+ * @returns 更新结果
+ */
 export function UpdateObj(obj: any) {
   return request({
     url: apiPrefix + obj.id + '/',
@@ -30,6 +45,11 @@ export function UpdateObj(obj: any) {
   });
 }
 
+/**
+ * 删除员工
+ * @param id 员工ID
+ * @returns 删除结果
+ */
 export function DelObj(id: any) {
   return request({
     url: apiPrefix + id + '/',
@@ -38,6 +58,11 @@ export function DelObj(id: any) {
   });
 }
 
+/**
+ * 获取员工详情
+ * @param id 员工ID
+ * @returns 员工详情
+ */
 export function GetObj(id: any) {
   return request({
     url: apiPrefix + id + '/',
@@ -45,10 +70,13 @@ export function GetObj(id: any) {
   });
 }
 
-// 添加 GetPermission 函数导出
-export const GetPermission = () => {
+/**
+ * 获取员工列权限
+ * @returns 列权限数据
+ */
+export function GetPermission() {
   return request({
-    url: apiPrefix + 'field_permission/',
-    method: 'get',
+    url: apiPrefix + 'permission/',
+    method: 'get'
   });
-};
+}

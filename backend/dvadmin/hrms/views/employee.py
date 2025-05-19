@@ -47,7 +47,6 @@ class EmployeeViewSet(CustomModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filter_fields = ['name', 'employee_id', 'status', 'dept', 'position']
 
-    @action(methods=['GET'], detail=False)
     def list(self, request, *args, **kwargs):
         print("0000000000"+request.query_params)
         return super().list(request, *args, **kwargs)
