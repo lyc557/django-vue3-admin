@@ -91,7 +91,7 @@ yarn dev
 	python3 manage.py runserver 0.0.0.0:8000
 	# 生产环境执行
 	daphne -b 0.0.0.0 -p 8000 application.asgi:application
-  	uvicorn application.asgi:application --port 8000 --host 0.0.0.0 --workers 8
+  	uvicorn application.asgi:application --port 8000 --host 0.0.0.0 --workers 4
 ~~~
 ## 开发建议
 前后端backend与web各自单独一个窗口打开进行开发

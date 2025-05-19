@@ -9,12 +9,10 @@ export function UploadResume(data: FormData){
   return request({
     url: apiPrefix+'upload/',
     method: 'post',
-    data,
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    }
+    data: FormData
   });
 }
+
 
 /**
  * 分析简历内容
