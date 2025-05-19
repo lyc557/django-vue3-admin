@@ -112,6 +112,9 @@ urlpatterns = (
 
             # 仅用于开发，上线需关闭
             path("api/token/", LoginTokenView.as_view()),
+            # 插件路由
+            path('api/hrms/', include('dvadmin.hrms.urls')),
+
             # 前端页面映射
             path('web/', web_view, name='web_view'),
             # hrms

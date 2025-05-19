@@ -3,6 +3,10 @@ import { PageQuery, AddReq, DelReq, EditReq, InfoReq } from '@fast-crud/fast-cru
 
 export const apiPrefix = '/api/system/role/';
 
+/**
+ * 获取权限列表
+ * @returns 返回权限列表数据
+ */
 export function GetPermission() {
 	return request({
 		url: apiPrefix + 'field_permission/',
