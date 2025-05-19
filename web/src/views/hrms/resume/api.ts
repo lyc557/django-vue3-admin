@@ -1,5 +1,5 @@
 import { request } from '/@/utils/service';
-const apiPrefix = '/api/system/resume/';
+const apiPrefix = '/api/hrms/resume/';
 
 /**
  * 上传简历文件

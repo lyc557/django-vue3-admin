@@ -3,7 +3,7 @@ import os
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.conf import settings
-from dvadmin.system.models import Resume
+from dvadmin.hrms.models import Resume
 from dvadmin.utils.viewset import CustomModelViewSet
 from dvadmin.utils.serializers import CustomModelSerializer
 from dvadmin.utils.json_response import DetailResponse, SuccessResponse, ErrorResponse

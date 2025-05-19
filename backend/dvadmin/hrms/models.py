@@ -150,3 +150,19 @@ class Leave(CoreModel):
         verbose_name = "请假记录表"
         verbose_name_plural = verbose_name
         ordering = ("-create_datetime",)
+
+
+class Resume(CoreModel):
+    """简历模型"""
+    file = models.FileField(upload_to='resume/%Y/%m/%d/', verbose_name='简历文件')
+    file_name = models.CharField(max_length=255, verbose_name='文件名称')
+    file_type = models.CharField(max_length=100, verbose_name='文件类型')
+    file_size = models.IntegerField(verbose_name='文件大小(KB)')
+    content = models.TextField(null=True, blank=True, verbose_name='简历内容')
+    analysis_result = models.JSONField(null=True, blank=True, verbose_name='分析结果')
+    
+    class Meta:
+        db_table = table_prefix + "system_resume"
+        verbose_name = "简历表"
+        verbose_name_plural = verbose_name
+        ordering = ("-create_datetime",)
