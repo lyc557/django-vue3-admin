@@ -1,41 +1,29 @@
 import { request } from '/@/utils/service';
-import { UserPageQuery, AddReq, DelReq, EditReq, InfoReq } from '@fast-crud/fast-crud';
+const apiPrefix = '/api/system/resume/';
 
-export const apiPrefix = '/api/system/login_log/';
-export function GetList(query: UserPageQuery) {
-	return request({
-		url: apiPrefix,
-		method: 'get',
-		params: query,
-	});
-}
-export function GetObj(id: InfoReq) {
-	return request({
-		url: apiPrefix + id,
-		method: 'get',
-	});
-}
-
-export function AddObj(obj: AddReq) {
-	return request({
-		url: apiPrefix,
-		method: 'post',
-		data: obj,
-	});
+/**
+ * 上传简历文件
+ * @param {FormData} data - 包含文件和其他参数的表单数据
+ */
+export function UploadResume(data: FormData){
+  return request({
+    url: apiPrefix+'upload/',
+    method: 'post',
+    data,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    }
+  });
 }
 
-export function UpdateObj(obj: EditReq) {
-	return request({
-		url: apiPrefix + obj.id + '/',
-		method: 'put',
-		data: obj,
-	});
-}
-
-export function DelObj(id: DelReq) {
-	return request({
-		url: apiPrefix + id + '/',
-		method: 'delete',
-		data: { id },
-	});
+/**
+ * 分析简历内容
+ * @param {Object} data - 分析参数
+ */
+export function AnalyzeResume(data: { file_id: string; job_description?: string }){
+  return request({
+    url: apiPrefix+'analyze',
+    method: 'post',
+    data,
+  });
 }

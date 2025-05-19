@@ -60,7 +60,6 @@ INSTALLED_APPS = [
     "captcha",
     "channels",
     "dvadmin.system",
-    "dvadmin.hrms", #添加hrms应用
 ]
 
 MIDDLEWARE = [
