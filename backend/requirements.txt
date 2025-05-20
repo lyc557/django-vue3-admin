@@ -1,3 +1,4 @@
+# Django 核心依赖
 Django==4.2.14
 django-comment-migrate==0.1.7
 django-cors-headers==4.4.0
@@ -9,7 +10,20 @@ django-simple-captcha==0.6.0
 django-timezone-field==7.0
 djangorestframework-simplejwt==5.3.1
 drf-yasg==1.21.7
+
+# 数据库和存储
 mysqlclient==2.2.0
+psycopg2==2.9.9
+
+# Web 服务器和 ASGI/WSGI
+channels==4.1.0
+channels-redis==4.2.0
+websockets==11.0.3
+uvicorn==0.30.3
+gunicorn==22.0.0
+daphne==4.2.0
+
+# 工具库
 pypinyin==0.51.0
 ua-parser==0.18.0
 pyparsing==3.1.2
@@ -17,17 +31,39 @@ openpyxl==3.1.5
 requests==2.32.3
 typing-extensions==4.12.2
 tzlocal==5.2
-channels==4.1.0
-channels-redis==4.2.0
-websockets==11.0.3
 user-agents==2.2.0
 six==1.16.0
 whitenoise==6.7.0
-psycopg2==2.9.9
-uvicorn==0.30.3
-gunicorn==22.0.0
-gevent==25.5.1
 Pillow==10.4.0
 pyinstaller==6.13.0
 dvadmin3-celery==3.1.6
-daphne==4.2.0
+
+# AI 和 NLP 依赖
+python-docx==0.8.11
+pdfplumber>=0.10.3
+pdfminer.six==20231228
+sentence-transformers>=2.2.2
+huggingface-hub>=0.16.4
+numpy>=1.21.6,<2.0.0
+pandas>=2.1.4
+openai>=1.0.0
+python-dotenv>=1.0.0
+tenacity
+
+# LangChain 相关
+langchain
+langchain_community
+langchain-huggingface
+langchain-chroma
+pypdf
+
+# 基础依赖
+regex
+chromadb
+tqdm
+
+# 搜索和非结构化数据处理
+elasticsearch==8.18.0
+unstructured
+pydantic<2.11
+modelscope

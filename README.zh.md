@@ -79,6 +79,8 @@ yarn dev
 	mysql数据库字符集：utf8mb4
 4. 安装依赖环境
 	pip3 install -r requirements.txt
+	# 使用国内镜像加速
+	pip3 install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
 5. 执行迁移命令：
 	python3 manage.py makemigrations
 	python3 manage.py migrate

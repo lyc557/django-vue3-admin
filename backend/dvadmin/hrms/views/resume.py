@@ -8,6 +8,8 @@ from dvadmin.utils.viewset import CustomModelViewSet
 from dvadmin.utils.serializers import CustomModelSerializer
 from dvadmin.utils.json_response import DetailResponse, SuccessResponse, ErrorResponse
 from dvadmin.utils.viewset import CustomModelViewSet
+       # 调用简历解析接口
+from dvadmin.utils.resume_parser import parse_resume, extract_resume_info
 
 class ResumeSerializer(CustomModelSerializer):
     """简历序列化器"""
@@ -23,6 +25,21 @@ class ResumeViewSet(CustomModelViewSet):
     permission_classes = []
     queryset = Resume.objects.all()
     serializer_class = ResumeSerializer
+
+    def __getfileid__(self,):
+        """获取文件ID"""
+        # 生成毫秒级时间戳加上随机4位编码作为file_id
+        import time
+        import random
+        import string
+        
+        # 获取毫秒级时间戳
+        timestamp = int(time.time() * 1000)
+        # 生成随机4位编码
+        random_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+        # 组合成file_id
+        file_id = f"{timestamp}_{random_code}"
+        return file_id
     
     @action(methods=["POST"], detail=False)
     def upload(self, request):
@@ -30,19 +47,35 @@ class ResumeViewSet(CustomModelViewSet):
         file = request.FILES.get("file")
         if not file:
             return Response({"code": 4000, "msg": "请上传文件"})
+        
+        # 简历评分要求
+        resume_description = request.form.get('job_description', '')
+        print("简历评分要求：", resume_description)
             
         # 获取文件信息
         file_name = file.name
         file_size = round(file.size / 1024)
         file_type = file_name.split(".")[-1]
+        file_id = self.__getfileid__()
         
         # 保存文件
         resume = Resume.objects.create(
             file=file,
+            file_id=file_id,
             file_name=file_name,
             file_type=file_type,
             file_size=file_size
         )
+
+ 
+
+        # 在视图函数中
+        result = parse_resume(file_path)
+        if result.get('code') == 200:
+            resume_data = result.get('data')
+            extracted_info = extract_resume_info(resume_data)
+            print("提取的简历信息：", extracted_info)
+
         
         return Response({
             "code": 2000,

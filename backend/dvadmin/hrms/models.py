@@ -158,6 +158,7 @@ class Resume(CoreModel):
     file_name = models.CharField(max_length=255, verbose_name='文件名称')
     file_type = models.CharField(max_length=100, verbose_name='文件类型')
     file_size = models.IntegerField(verbose_name='文件大小(KB)')
+    file_id = models.CharField(null=True, blank=True, max_length=100,verbose_name='文件ID')
     content = models.TextField(null=True, blank=True, verbose_name='简历内容')
     analysis_result = models.JSONField(null=True, blank=True, verbose_name='分析结果')
     

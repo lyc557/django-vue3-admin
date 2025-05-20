@@ -48,3 +48,17 @@ LOGIN_NO_CAPTCHA_AUTH = True
 ALLOWED_HOSTS = ["*"]
 # 列权限中排除App应用
 COLUMN_EXCLUDE_APPS = []
+
+
+# DeepSeek API 配置
+#DEEPSEEK_API_KEY = "xxxxxxxxxxxxx"
+#DEEPSEEK_API_BASE = "https://api.deepseek.com/v1"
+#DEEPSEEK_MODEL = "deepseek-chat"
+#DEEPSEEK_MAX_WORKERS = 2  # 并发工作线程数量
+
+# 向量数据库配置
+ES_URL = "https://xxx.xxx.xxx.xxx:9200"
+ES_USERNAME = "elastic"
+ES_PASSWORD = "xxxxxxx"
+ES_VERIFY_CERTS = False
+ES_INDEX_NAME = "vector_es_index20250427"
