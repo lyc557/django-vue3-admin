@@ -4,14 +4,19 @@ from tqdm import tqdm
 from elasticsearch import Elasticsearch
 from langchain.docstore.document import Document
 from langchain_core.embeddings import Embeddings
-from conf.env import ES_URL,ES_USERNAME,ES_PASSWORD,ES_VERIFY_CERTS
 from logger_config import get_logger
 import numpy as np
 from langchain_core.embeddings import Embeddings
 from embedding_model import EmbeddingModel
-
+from dotenv import load_dotenv
 # 初始化日志记录器
 logger = get_logger(__name__)
+load_dotenv()
+
+ES_URL = os.getenv("ES_URL", "")
+ES_USERNAME = os.getenv("ES_USERNAME", "")
+ES_PASSWORD = os.getenv("ES_PASSWORD", "")
+ES_VERIFY_CERTS = os.getenv("ES_VERIFY_CERTS", "False") == "True"
 
 
 class ESVectorDB:
