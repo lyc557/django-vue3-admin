@@ -14,8 +14,8 @@
         <div v-for="(message, index) in chatMessages" :key="index" 
           :class="['message', message.role === 'user' ? 'user-message' : 'ai-message']">
           <div class="message-avatar">
-            <img v-if="message.role === 'user'" src="../assets/user-avatar.png" alt="用户头像">
-            <img v-else src="../assets/ai-avatar.png" alt="AI头像">
+            <img v-if="message.role === 'user'" src="/src/assets/ai-avatar.png" alt="用户头像">
+            <img v-else src="/src/assets/ai-avatar.png" alt="AI头像">
           </div>
           <div class="message-content" v-html="renderMarkdown(message.content)"></div>
         </div>
@@ -76,7 +76,7 @@ const resumeList = ref([]);
 // 获取简历列表数据
 const fetchResumes = async () => {
   try {
-    const response = await axios.get('/api/resumes');
+    const response = await axios.get('/api/hrms/resumes');
     // 从response.data.data获取数组数据
     resumeList.value = Array.isArray(response.data?.data) ? response.data.data : [];
   } catch (error) {

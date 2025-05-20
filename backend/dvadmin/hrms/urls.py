@@ -1,5 +1,5 @@
-from django.urls import path, re_path
-from rest_framework.routers import DefaultRouter
+from django.urls import path
+from rest_framework import routers
 
 from dvadmin.hrms.views.employee import EmployeeViewSet
 from dvadmin.hrms.views.position import PositionViewSet
@@ -7,7 +7,7 @@ from dvadmin.hrms.views.attendance import AttendanceViewSet
 from dvadmin.hrms.views.leave import LeaveViewSet
 from dvadmin.hrms.views.resume import ResumeViewSet
 
-router = DefaultRouter()
+router = routers.SimpleRouter()
 router.register(r'employee', EmployeeViewSet)
 router.register(r'position', PositionViewSet)
 router.register(r'attendance', AttendanceViewSet)
