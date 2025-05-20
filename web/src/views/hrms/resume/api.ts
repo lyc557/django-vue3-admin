@@ -10,6 +10,7 @@ export function UploadResume(data: FormData){
     url: apiPrefix+'upload/',
     method: 'post',
     data: data,
+    timeout: 1000000, // 设置超时时间为100秒（100000毫秒）
     headers: {
       'Content-Type': 'multipart/form-data',
     }

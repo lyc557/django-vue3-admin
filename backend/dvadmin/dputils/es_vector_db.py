@@ -7,6 +7,8 @@ from langchain_core.embeddings import Embeddings
 import numpy as np
 from langchain_core.embeddings import Embeddings
 from dotenv import load_dotenv
+import time
+from datetime import datetime
 
 from .embedding_model import EmbeddingModel
 from .logger_config import get_logger
