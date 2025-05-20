@@ -67,3 +67,4 @@ elasticsearch==8.18.0
 unstructured
 pydantic<2.11
 modelscope
+loguru

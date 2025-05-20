@@ -143,5 +143,5 @@ def __download_model__():
     print(f"模型已下载至：{model_dir}")
 
 if __name__ == "__main__":
-    # main()
-    __download_model__()
+    main()
+    # __download_model__()

@@ -7,7 +7,17 @@ import requests
 import re  # 添加 re 模块的导入
 from tqdm import tqdm
 from tenacity import retry, stop_after_attempt, wait_exponential
-from conf.env import *
+import os
+import sys
+from dotenv import load_dotenv
+# 从 .env 文件中加载环境变量
+
+load_dotenv()
+# 直接设置配置变量，避免导入 conf.env
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+DEEPSEEK_API_BASE = os.getenv("DEEPSEEK_API_BASE", "")
+DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "")
+DEEPSEEK_MAX_WORKERS = int(os.getenv("DEEPSEEK_MAX_WORKERS", "2"))
 
 class DeepSeekChat:
     def __init__(self, api_key: str = None, api_base: str = None, model: str = None):
@@ -50,7 +60,7 @@ class DeepSeekChat:
         {
             "name": "大盈私享app测试",
             "role": "UI自动化测试工程师",
-            "description": "万向信托移动私信系统提供客户账户管理、快速预约万向信托产品、查询账户资产概览、资产投资情况、交易流水及收益明细、资讯查看等功能。工作内容：根据需求编写测试点及用例，并标注优先级；提交缺陷报告，并对缺陷进行跟踪处理。针对系统兼容性等方面进行测试，在近期一次大版本更新中，累计发现 bug 近百个。"
+            "description": "万向信托移动私信系统提供客户账户管理、快速预约万向信托产品、查询账户资产概览、资产投资情况、交易流水及收益明细、资讯查看等功能。工作内容：根据需求编写测试点及用例，并标注优先级；提交缺陷报告，并对缺陷进行跟踪处理。针对系统兼容性等方面进行测试，在近期一次大版本更新中，累计发现 bug 上百个。"
         },
         {
             "name": "综合管理平台测试",
@@ -137,8 +147,9 @@ def main():
     chat = DeepSeekChat()
     
     # 从文件中读取简历内容
-    with open('output/吴晓双-软件测试.md', 'r', encoding='utf-8') as f:
+    with open('media/output/1745487393.md', 'r', encoding='utf-8') as f:
         document = f.read()
+
 
     PROMPT_TMPL = "你是一个专业的招聘助理，请从以下一份中文简历中提取结构化的关键信息，按如下格式输出：" + \
         "```json\n" + \
