@@ -19,6 +19,7 @@
         :on-change="handleFileChange"
         :before-upload="beforeUpload"
         :http-request="customUpload"
+        :data="extraParams"
         multiple
         accept=".pdf,.docx"
       >
@@ -131,7 +132,7 @@
    * @param {Object} file - 上传的文件对象
    * @param {Array} files - 文件列表
    */
-  const handleFileChange = debounce(async (file, files) => {
+   const handleFileChange = debounce((file, files, extraParams) => {
     console.log('file.status:', file.status);
     if (file.status === 'success') {
       fileList.value = files;

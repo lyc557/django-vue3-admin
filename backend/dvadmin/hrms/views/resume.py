@@ -19,6 +19,8 @@ class ResumeSerializer(CustomModelSerializer):
 
 class ResumeViewSet(CustomModelViewSet):
     """简历管理"""
+    # permission_classes 用于指定访问视图所需的权限。当设置为空列表 [] 时，表示任何人都可以访问该接口，无需身份认证。
+    permission_classes = []
     queryset = Resume.objects.all()
     serializer_class = ResumeSerializer
     

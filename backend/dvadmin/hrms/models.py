@@ -162,7 +162,7 @@ class Resume(CoreModel):
     analysis_result = models.JSONField(null=True, blank=True, verbose_name='分析结果')
     
     class Meta:
-        db_table = table_prefix + "system_resume"
+        db_table = table_prefix + "hrms_resume"
         verbose_name = "简历表"
         verbose_name_plural = verbose_name
         ordering = ("-create_datetime",)

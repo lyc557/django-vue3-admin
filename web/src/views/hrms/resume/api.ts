@@ -9,7 +9,10 @@ export function UploadResume(data: FormData){
   return request({
     url: apiPrefix+'upload/',
     method: 'post',
-    data: FormData
+    data: data,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    }
   });
 }
 
