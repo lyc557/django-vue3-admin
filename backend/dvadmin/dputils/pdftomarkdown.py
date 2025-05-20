@@ -34,7 +34,6 @@ class MarkdownConverter:
         else:
             print("MPS not available, skipping memory clearing.")
         torch.cuda.empty_cache()
-        print("GPU memory cleared.")
 
     def doc_convert(self, doc_path: str):
         """

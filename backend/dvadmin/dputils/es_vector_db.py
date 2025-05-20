@@ -4,11 +4,13 @@ from tqdm import tqdm
 from elasticsearch import Elasticsearch
 from langchain.docstore.document import Document
 from langchain_core.embeddings import Embeddings
-from logger_config import get_logger
 import numpy as np
 from langchain_core.embeddings import Embeddings
-from embedding_model import EmbeddingModel
 from dotenv import load_dotenv
+
+from .embedding_model import EmbeddingModel
+from .logger_config import get_logger
+
 # 初始化日志记录器
 logger = get_logger(__name__)
 load_dotenv()
@@ -16,6 +18,7 @@ load_dotenv()
 ES_URL = os.getenv("ES_URL", "")
 ES_USERNAME = os.getenv("ES_USERNAME", "")
 ES_PASSWORD = os.getenv("ES_PASSWORD", "")
+ES_INDEX_NAME = os.getenv("ES_INDEX_NAME", "")
 ES_VERIFY_CERTS = os.getenv("ES_VERIFY_CERTS", "False") == "True"
 
 
@@ -407,6 +410,40 @@ def _main_4_one_docs_():
         logger.info(f"文档内容: {doc.page_content}, 分数: {doc.metadata.get('score')}")
 
 
+def save_to_es(filename,document,parsed_data):
+    index_name = ES_INDEX_NAME
+    es = ESVectorDB(ES_URL,ES_USERNAME, ES_PASSWORD, ES_VERIFY_CERTS)
+    # 定义索引名称
+    # 创建索引，指定向量维度为1024
+    es.create_index(index_name, dims=1024, force_recreate=False)
+    # 中文向量化模型
+    embedding_model = EmbeddingModel()
+    # 创建示例文档
+    doc = Document(page_content=document, 
+                # 使用元数据存储其他信息
+                metadata={
+                    "doc_id": filename,
+                    "filename": filename,
+                    "upload_time": datetime.now().isoformat(), 
+                    "name": parsed_data['name'],
+                    "phone": parsed_data['phone'],
+                    "email": parsed_data['email'],
+                    "education": parsed_data['education'],
+                    "score": parsed_data['score'],
+                    "score_details": parsed_data['score_details'],
+                    "work_experience": str(parsed_data['work_experience']),
+                    "skills": parsed_data['skills'],
+                    "projects": parsed_data['projects'],
+                    "other": parsed_data['other']
+                })
+    docs=[] 
+    docs.append(doc)
+    # 处理 parsed_data = parsed_data.strip()
+    print("开始索引文档...")
+    # 使用index_documents方法批量索引文档
+    es.index_documents(docs, embedding_model, index_name)
+
+    return True
 
 def _main_():
     # 只是向量数据库，没有向量模型。

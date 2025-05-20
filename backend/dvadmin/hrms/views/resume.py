@@ -1,5 +1,7 @@
 # ... existing code ...
 import os
+import json
+
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.conf import settings
@@ -10,6 +12,9 @@ from dvadmin.utils.json_response import DetailResponse, SuccessResponse, ErrorRe
 from dvadmin.utils.viewset import CustomModelViewSet
        # 调用简历解析接口
 from dvadmin.dputils.document_parser import parse_pdf, parse_docx
+from dvadmin.dputils.deepseek_chat import chatToLLM4Analysis
+from dvadmin.dputils.es_vector_db import save_to_es
+
 
 class ResumeSerializer(CustomModelSerializer):
     """简历序列化器"""
@@ -53,20 +58,12 @@ class ResumeViewSet(CustomModelViewSet):
         resume_description = request.data.get('job_description', '')
         # print("简历评分要求：", resume_description)
 
-        # 打印文件的所有属性
-        print("文件名:", file.name)
-        print("文件大小:", file.size)
-        print("文件类型:", file.content_type)
-        print("文件字符集:", file.charset)
-        print("文件是否关闭:", file.closed)
-        # 如果文件有其他自定义属性，也可以通过dir()函数查看
-        print("所有属性和方法:", dir(file))
-            
         # 获取文件信息
         file_id = self.__getfileid__()
         file_name = file_id + "." + file.name.split(".")[-1]
         file_size = round(file.size / 1024)
         file_type = file_name.split(".")[-1]
+        # 重设置文件名
         file._set_name(file_name)
         
         # 保存文件
@@ -82,7 +79,7 @@ class ResumeViewSet(CustomModelViewSet):
         document_markdown = ''
         file_path = os.path.join(settings.MEDIA_ROOT, resume.file.name)
         print("文件路径：", file_path)
-        
+
         if file.name.endswith('.pdf'):
         # 解析PDF 使用magicpdf 解析成Markdown文件
             document_markdown = parse_pdf(file_path)
@@ -92,15 +89,47 @@ class ResumeViewSet(CustomModelViewSet):
         else:
             return Response({"code": 4000, "msg": "不支持的文件格式"})
 
-        print("解析后的Markdown内容：", document_markdown)
-        
+        if not document_markdown or len(document_markdown.strip()) < 50:  # 设置最小内容长度阈值为50个字符
+            return Response({"code": 4000, "msg": "文件解析失败或内容过少，请检查上传的文件是否正确"})
+            
+        analysis = chatToLLM4Analysis(document_markdown, resume_description)
+
+        # 从analysis中提取json字符串
+        try:
+            # 查找json字符串的起始和结束位置
+            start_idx = analysis.find('{')
+            end_idx = analysis.rfind('}') + 1
+            if start_idx == -1 or end_idx == 0:
+                return Response({"code": 4000, "msg": "No valid JSON found in LLM output"})
+                
+            json_str = analysis[start_idx:end_idx]
+            # 解析JSON字符串
+            parsed_data = json.loads(json_str)
+            
+            # 验证必要字段是否存在
+            required_fields = ['name', 'phone', 'email', 'education', 'work_experience', 
+                'skills', 'projects', 'other','score','score_details']
+            for field in required_fields:
+                if field not in parsed_data:
+                    return Response({"code": 4000, "msg": f'Missing required field: {field}' })
+                    
+        except json.JSONDecodeError as e:
+            return Response({"code": 4000, "msg": f'Failed to parse JSON from LLM output: {str(e)}'})
+        except Exception as e:
+            return Response({"code": 4000, "msg": f'Error processing LLM output: {str(e)}'})
+
+        # 保存解析结果到es数据库
+        save_to_es(file_name,document_markdown,parsed_data)
+
+        print("解析结果：", parsed_data)
+
         return Response({
             "code": 2000,
             "msg": "上传成功",
             "data": {
-                "id": resume.id,
-                "file_name": resume.file_name,
-                "url": resume.file.url if hasattr(resume.file, 'url') else None
+                "id": file_id,
+                "file_name": file_name,
+                "parsed_data": parsed_data
             }
         })
     

@@ -138,8 +138,8 @@
       fileList.value = files;
       
       // 检查响应是否符合API规范
-      if (file.response && file.response.code === 2000 && file.response.data) {
-        const parsedData = file.response.data;
+      if (file.response && file.response.code === 2000 && file.response.data && file.response.data.parsed_data) {
+        const parsedData = file.response.data.parsed_data;
         resumeData.value = {
           name: parsedData.name || '',
           phone: parsedData.phone || '',

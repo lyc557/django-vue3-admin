@@ -140,17 +140,55 @@ class DeepSeekChat:
         return prompt
 
     
-    
-
-def main():
     # 使用示例
-    chat = DeepSeekChat()
+chat = DeepSeekChat()
+
+def chatToLLM4Analysis(document, job_description):
+    # 让大模型提取简历关键信息，获得标准格式的json以及评分
+    document = document.strip()
+    # 构建提示模板，可以加入岗位要求
+    PROMPT_TMPL = "你是一个专业的招聘经理，请从以下一份中文简历中提取结构化的关键信息"
     
+    if job_description:
+        PROMPT_TMPL += "，并根据简历要求进行打分并给出得分详情：\n简历要求：{{job_description}}\n"
+    
+    PROMPT_TMPL += "按如下格式输出：" + \
+       "```json\n" + \
+       "{\n" + \
+       "    \"name\": \"姓名\",\n" + \
+       "    \"phone\": \"手机号码\",\n" + \
+       "    \"email\": \"邮箱\",\n" + \
+       "    \"education\": \"教育经历\",\n" + \
+       "    \"work_experience\": \"工作经历\"\n" + \
+       "    \"skills\": \"技能列表\",\n" + \
+       "    \"projects\": [{\n" + \
+       "        \"name\": \"项目名称\",\n" + \
+       "        \"role\": \"担任角色\",\n" + \
+       "        \"description\": \"项目描述\"\n" + \
+       "    }],\n" + \
+       "    \"other\": \"其他信息\"\n" + \
+       "    \"score\": \"综合得分\"\n" + \
+       "    \"score_details\": \"得分详情\"\n" + \
+       "}\n" + \
+       "```\n" + \
+       "简历内容：{{document}}" + \
+       "请确保输出的JSON格式正确，并且所有字段都有值。"
+
+    # 构建提示词
+    prompt = PROMPT_TMPL.replace('{{document}}', document)
+    if job_description:
+        prompt = prompt.replace('{{job_description}}', job_description)
+    
+    print("提示词：", prompt)
+    # 调用chat获取分析结果
+    analysis = chat.chat(prompt)  # 调用chat方法
+    return analysis
+    
+def main():
     # 从文件中读取简历内容
     with open('media/output/1745487393.md', 'r', encoding='utf-8') as f:
         document = f.read()
-
-
+        
     PROMPT_TMPL = "你是一个专业的招聘助理，请从以下一份中文简历中提取结构化的关键信息，按如下格式输出：" + \
         "```json\n" + \
         "{\n" + \
