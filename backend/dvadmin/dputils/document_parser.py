@@ -6,7 +6,7 @@ import traceback
 from docx import Document
 
 # 本地模块导入
-from pdftomarkdown import MarkdownConverter
+from .pdftomarkdown import MarkdownConverter
 
 def parse_docx(file_path):
     """解析docx文件并返回结构化数据"""

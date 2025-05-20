@@ -123,7 +123,7 @@ class MarkdownConverter:
 # 使用示例
 if __name__ == "__main__":
     converter = MarkdownConverter()  # 初始化时不传pdf_path
-    pdf_path = "/data/hrms/backend/uploads/1745295190.pdf"
+    pdf_path = "/Users/luyangcai/trae/django-vue3-admin/backend/media/output/1745491266.pdf"
     print("开始转换PDF到Markdown...")
     markdown_content = converter.convert(pdf_path)  # 只调用一次convert并传入参数
     converter.clear_gpu_memory()

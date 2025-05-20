@@ -81,6 +81,11 @@ yarn dev
 	pip3 install -r requirements.txt
 	# 使用国内镜像加速
 	pip3 install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+	# 安装完依赖后，执行以下命令，将所有依赖包的版本信息写入 requirements.txt 文件中
+	pip3 freeze > requirements.txt
+	
+	pip install 'git+https://github.com/facebookresearch/detectron2.git'
+	pip install -U "magic-pdf[full]" -i https://mirrors.aliyun.com/pypi/simple
 5. 执行迁移命令：
 	python3 manage.py makemigrations
 	python3 manage.py migrate

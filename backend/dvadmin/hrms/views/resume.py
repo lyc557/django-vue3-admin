@@ -9,7 +9,7 @@ from dvadmin.utils.serializers import CustomModelSerializer
 from dvadmin.utils.json_response import DetailResponse, SuccessResponse, ErrorResponse
 from dvadmin.utils.viewset import CustomModelViewSet
        # 调用简历解析接口
-from dvadmin.utils.resume_parser import parse_resume, extract_resume_info
+from dvadmin.dputils.document_parser import parse_pdf, parse_docx
 
 class ResumeSerializer(CustomModelSerializer):
     """简历序列化器"""
@@ -49,14 +49,25 @@ class ResumeViewSet(CustomModelViewSet):
             return Response({"code": 4000, "msg": "请上传文件"})
         
         # 简历评分要求
-        resume_description = request.form.get('job_description', '')
-        print("简历评分要求：", resume_description)
+        # 修改为
+        resume_description = request.data.get('job_description', '')
+        # print("简历评分要求：", resume_description)
+
+        # 打印文件的所有属性
+        print("文件名:", file.name)
+        print("文件大小:", file.size)
+        print("文件类型:", file.content_type)
+        print("文件字符集:", file.charset)
+        print("文件是否关闭:", file.closed)
+        # 如果文件有其他自定义属性，也可以通过dir()函数查看
+        print("所有属性和方法:", dir(file))
             
         # 获取文件信息
-        file_name = file.name
+        file_id = self.__getfileid__()
+        file_name = file_id + "." + file.name.split(".")[-1]
         file_size = round(file.size / 1024)
         file_type = file_name.split(".")[-1]
-        file_id = self.__getfileid__()
+        file._set_name(file_name)
         
         # 保存文件
         resume = Resume.objects.create(
@@ -67,15 +78,21 @@ class ResumeViewSet(CustomModelViewSet):
             file_size=file_size
         )
 
- 
+        # 文件解析
+        document_markdown = ''
+        file_path = os.path.join(settings.MEDIA_ROOT, resume.file.name)
+        print("文件路径：", file_path)
+        
+        if file.name.endswith('.pdf'):
+        # 解析PDF 使用magicpdf 解析成Markdown文件
+            document_markdown = parse_pdf(file_path)
+        elif file.name.endswith('.docx'):
+            # 解析DOCX
+            document_markdown = parse_docx(file_path)
+        else:
+            return Response({"code": 4000, "msg": "不支持的文件格式"})
 
-        # 在视图函数中
-        result = parse_resume(file_path)
-        if result.get('code') == 200:
-            resume_data = result.get('data')
-            extracted_info = extract_resume_info(resume_data)
-            print("提取的简历信息：", extracted_info)
-
+        print("解析后的Markdown内容：", document_markdown)
         
         return Response({
             "code": 2000,
