@@ -3,10 +3,6 @@
     
     <div class="header-container">
       <h1>智能简历筛选--简历筛选对话</h1>
-      
-      <div class="actions">
-        <el-button type="primary" @click="openHomePage">简历上传页面</el-button>
-      </div>
     </div>
 
     <div class="chat-container">
@@ -59,6 +55,63 @@
         </template>
       </el-table-column>
     </el-table>
+    
+    <!-- 添加简历详情对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      title="简历详情"
+      width="70%"
+      :before-close="handleClose"
+    >
+      <div v-if="currentResume" class="resume-detail">
+        <h2>{{ currentResume.name }} 的简历</h2>
+        
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="姓名">{{ currentResume.name }}</el-descriptions-item>
+          <el-descriptions-item label="电话">{{ currentResume.phone }}</el-descriptions-item>
+          <el-descriptions-item label="邮箱">{{ currentResume.email }}</el-descriptions-item>
+          <el-descriptions-item label="教育背景">{{ currentResume.education }}</el-descriptions-item>
+          <el-descriptions-item label="AI评分">
+            <el-tag :type="getScoreType(currentResume.score)">{{ currentResume.score }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="上传时间">{{ currentResume.upload_time }}</el-descriptions-item>
+        </el-descriptions>
+        
+        <div class="resume-section" v-if="currentResume.work_experience">
+          <h3>工作经历</h3>
+          <ul>
+            <li v-for="(exp, index) in currentResume.work_experience" :key="index">{{ exp }}</li>
+          </ul>
+        </div>
+        
+        <div class="resume-section" v-if="currentResume.skills">
+          <h3>技能</h3>
+          <ul>
+            <li v-for="(skill, index) in currentResume.skills" :key="index">{{ skill }}</li>
+          </ul>
+        </div>
+        
+        <div class="resume-section" v-if="currentResume.projects">
+          <h3>项目经历</h3>
+          <div v-for="(project, index) in currentResume.projects" :key="index" class="project-item">
+            <h4>{{ project.name }}</h4>
+            <p><strong>角色：</strong>{{ project.role }}</p>
+            <p><strong>描述：</strong>{{ project.description }}</p>
+          </div>
+        </div>
+        
+        <div class="resume-section" v-if="currentResume.score_details">
+          <h3>AI评分详情</h3>
+          <p>{{ currentResume.score_details }}</p>
+        </div>
+      </div>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -69,7 +122,7 @@ import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import { marked } from 'marked'; // 添加Markdown解析器
 import DOMPurify from 'dompurify';
-import { GetList } from './api';
+import { GetList, GetInfo } from './api';
 import { APIResponseData } from '../types';
 
 const router = useRouter();
@@ -92,14 +145,40 @@ const getScoreType = (score) => {
 };
 
 // 查看简历详情
+// 添加对话框相关状态
+const dialogVisible = ref(false);
+const currentResume = ref(null);
+
+// 修改查看详情方法
 const viewDetail = (resume) => {
-  router.push(`/resume-detail/${resume.id}`);
+  // 获取完整的简历信息
+  getResumeDetail(resume.id).then(data => {
+    currentResume.value = data;
+    dialogVisible.value = true;
+  }).catch(error => {
+    ElMessage.error('获取简历详情失败');
+    console.error('获取简历详情失败:', error);
+  });
 };
 
-const openHomePage = () => {
-  window.location.href = '/';
+// 关闭对话框
+const handleClose = () => {
+  dialogVisible.value = false;
 };
 
+// 获取简历详情
+const getResumeDetail = async (id) => {
+  try {
+    // 如果后端有专门的获取详情接口，可以调用该接口
+    let res: APIResponseData = await GetInfo(id.toString())
+    return res.data;
+  } catch (error) {
+    console.error('获取简历详情失败:', error);
+    // 如果没有专门的接口，可以从列表中找到对应的简历
+    const resume = resumeList.value.find(item => item.id === id);
+    return resume || null;
+  }
+};
 
 const chatMessages = ref([]);
     const userInput = ref('');
@@ -274,4 +353,28 @@ onMounted(() => {
       border-radius: 4px;
       margin-top: 20px;
     }
+
+/* 添加简历详情样式 */
+.resume-detail {
+  padding: 20px;
+}
+
+.resume-section {
+  margin-top: 20px;
+  border-top: 1px solid #ebeef5;
+  padding-top: 15px;
+}
+
+.project-item {
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.project-item h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #409eff;
+}
 </style>

@@ -46,6 +46,18 @@ class ResumeViewSet(CustomModelViewSet):
         file_id = f"{timestamp}_{random_code}"
         return file_id
     
+    
+    def detail(self, request, *args, **kwargs):
+        """获取简历详情"""
+        # TODO: 从ES数据库获取完整的简历信息，包括解析后的结构化数据
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response({
+            "code": 2000,
+            "msg": "获取成功",
+            "data": serializer.data
+        })
+    
     @action(methods=["POST"], detail=False)
     def upload(self, request):
         """上传简历文件"""
@@ -214,4 +226,4 @@ class ResumeViewSet(CustomModelViewSet):
             'size': size,
             'data': paged_resumes
         })
-        
+    

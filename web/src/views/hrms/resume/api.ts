@@ -32,10 +32,25 @@ export function AnalyzeResume(data: { file_id: string; job_description?: string 
   });
 }
 
+/**
+ * 获取简历列表
+ * @param {Object} params - 查询参数
+ */
 export function GetList(params: any) {
   return request({
     url: apiPrefix,
     method: 'get',
     params,
+  });
+}
+
+/**
+ * 获取简历详情
+ * @param {string} id - 简历ID
+ */
+export function GetInfo(id: string) {
+  return request({
+    url: apiPrefix + id + '/',
+    method: 'get',
   });
 }
