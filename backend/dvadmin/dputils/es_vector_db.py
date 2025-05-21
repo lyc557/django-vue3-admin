@@ -447,6 +447,26 @@ def save_to_es(filename,document,parsed_data):
 
     return True
 
+def list_resume():
+    es = ESVectorDB(ES_URL,ES_USERNAME, ES_PASSWORD, ES_VERIFY_CERTS)
+    index_name = ES_INDEX_NAME
+    # 查询最新的10条简历
+    results = es.search_documents(
+        index_name=index_name,
+        query={
+            "match_all": {}
+        },
+        sort=[
+            {
+                "metadata.score": {
+                    "order": "desc"
+                }
+            }
+        ],
+        size=10
+    )
+    return results
+
 def _main_():
     # 只是向量数据库，没有向量模型。
     # 连接 ES 实例

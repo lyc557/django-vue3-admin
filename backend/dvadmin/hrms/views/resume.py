@@ -13,7 +13,7 @@ from dvadmin.utils.viewset import CustomModelViewSet
        # 调用简历解析接口
 from dvadmin.dputils.document_parser import parse_pdf, parse_docx
 from dvadmin.dputils.deepseek_chat import chatToLLM4Analysis
-from dvadmin.dputils.es_vector_db import save_to_es
+from dvadmin.dputils.es_vector_db import save_to_es, list_resume
 
 
 class ResumeSerializer(CustomModelSerializer):
@@ -169,72 +169,49 @@ class ResumeViewSet(CustomModelViewSet):
             "data": analysis_result
         })
 
-    def list():
-        print("获取简历列表")
+    def list(self, request, *args, **kwargs):
         """获取简历列表"""
-        # try:
-        #     # 连接ES数据库
-        #     es = ESVectorDB(ES_URL,ES_USERNAME, ES_PASSWORD, ES_VERIFY_CERTS)
-        #     index_name = ES_INDEX_NAME
-        #     # 查询最新的10条简历
-        #     results = es.search_documents(
-        #         index_name=index_name,
-        #         query={
-        #             "match_all": {}
-        #         },
-        #         sort=[
-        #             {
-        #                 "metadata.score": {
-        #                     "order": "desc"
-        #                 }
-        #             }
-        #         ],
-        #         size=10
-        #     )
+        try:
+            results = list_resume()
+        except Exception as e:
+            print(f"获取简历列表失败: {str(e)}\n错误类型: {type(e).__name__}\n完整堆栈: ")
+            return Response({
+                'code': 4000,
+                'error': f'获取简历列表失败: {str(e)}',
+                'error_type': type(e).__name__
+            })
+        
+        print(f"查到{results['hits']['total']['value']}条数据，本次返回{len(results['hits']['hits'])}条")
 
-        #     print(f"查到{results['hits']['total']['value']}条数据，本次返回{len(results['hits']['hits'])}条")
-
-        #     # 处理返回结果
-        #     resumes = []
-        #     for hit in results['hits']['hits']:
-        #         resume = {
-        #             'id': hit['_id'],
-        #             'name': hit['_source']['metadata']['name'],
-        #             'phone': hit['_source']['metadata'].get('phone', ''),
-        #             'email': hit['_source']['metadata'].get('email', ''),
-        #             'education': hit['_source']['metadata'].get('education', ''),
-        #             'score': hit['_source']['metadata'].get('score', ''),
-        #             'filename': hit['_source']['metadata']['filename'],
-        #             'upload_time': hit['_source']['metadata'].get('upload_time', '')
-        #         }
-        #         resumes.append(resume)
-        #         print("姓名：", resume['name'])
-        #     # 获取分页参数
-        #     page = int(request.args.get('page', 1))
-        #     size = int(request.args.get('size', 10))
-            
-        #     # 计算分页数据
-        #     start = (page - 1) * size
-        #     end = start + size
-        #     paged_resumes = resumes[start:end]
-            
-        # except Exception as e:
-        #     print(f"获取简历列表失败: {str(e)}\n错误类型: {type(e).__name__}\n完整堆栈: {traceback.format_exc()}")
-        #     return jsonify({
-        #         'error': f'获取简历列表失败: {str(e)}',
-        #         'error_type': type(e).__name__,
-        #         'stack_trace': traceback.format_exc().splitlines()
-        #     }), 500
-    
-                
-        # return jsonify({
-        #     'total': results['hits']['total']['value'],
-        #     'page': page,
-        #     'size': size,
-        #     'data': paged_resumes
-        # })
-        return jsonify({
-                'error': f'获取简历列表失败:',
-                'error_type': "aaa",
-                'stack_trace': "aaa"
-            }), 500
+        # 处理返回结果
+        resumes = []
+        for hit in results['hits']['hits']:
+            resume = {
+                'id': hit['_id'],
+                'name': hit['_source']['metadata']['name'],
+                'phone': hit['_source']['metadata'].get('phone', ''),
+                'email': hit['_source']['metadata'].get('email', ''),
+                'education': hit['_source']['metadata'].get('education', ''),
+                'score': hit['_source']['metadata'].get('score', ''),
+                'filename': hit['_source']['metadata']['filename'],
+                'upload_time': hit['_source']['metadata'].get('upload_time', '')
+            }
+            resumes.append(resume)
+            print("姓名：", resume['name'])
+        # 获取分页参数
+        page = int(request.query_params.get('page', 1))
+        size = int(request.query_params.get('size', 10))
+        
+        # 计算分页数据
+        start = (page - 1) * size
+        end = start + size
+        paged_resumes = resumes[start:end]
+        
+        return Response({
+            'code': 2000,
+            'total': results['hits']['total']['value'],
+            'page': page,
+            'size': size,
+            'data': paged_resumes
+        })
+        

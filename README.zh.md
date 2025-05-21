@@ -99,6 +99,14 @@ yarn dev
 	# 生产环境执行
 	daphne -b 0.0.0.0 -p 8000 application.asgi:application
   	uvicorn application.asgi:application --port 8000 --host 0.0.0.0 --workers 4
+
+9.模型配置
+如遇到模型加载错误，例如：PDF解析错误 /Users/yangcailu/.cache/huggingface/hub/models--opendatalab--PDF-Extract-Kit-1.0/snapshots/95817b4b2321769155f05c8d7e2f5a6b6da9e662/models/OCR/paddleocr_torch/ch_PP-OCRv4_rec_server_doc_infer.pth is not existed.
+请先下载模型权重
+cd backend/dvadmin/dputils
+python download_models_hf.py
+模型下载完成后，会覆盖配置文件 magic-pdf.json ,需要重新进行配置
+
 ~~~
 ## 开发建议
 前后端backend与web各自单独一个窗口打开进行开发

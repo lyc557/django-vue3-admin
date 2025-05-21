@@ -62,26 +62,25 @@
   </div>
 </template>
 
-<script setup>
-import { ref, nextTick } from 'vue';
+<script lang="ts" setup name="dept">
+import { ref, nextTick, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import { marked } from 'marked'; // 添加Markdown解析器
 import DOMPurify from 'dompurify';
+import { GetList } from './api';
+import { APIResponseData } from '../types';
 
 const router = useRouter();
 const resumeList = ref([]);
 
-// 获取简历列表数据
+// 从后端获取简历列表
 const fetchResumes = async () => {
-  try {
-    const response = await axios.get('/api/hrms/resumes');
-    // 从response.data.data获取数组数据
-    resumeList.value = Array.isArray(response.data?.data) ? response.data.data : [];
-  } catch (error) {
-    console.error('获取简历列表失败:', error);
-    resumeList.value = []; // Fallback to empty array
+  let res: APIResponseData = await GetList({});
+
+  if (res?.code === 2000 && Array.isArray(res.data)) {
+    resumeList.value = res.data as Array<any>;
   }
 };
 
@@ -172,13 +171,17 @@ const chatMessages = ref([]);
       }
     };
 
-// 初始化获取数据
-fetchResumes();
+
 
 // 添加Markdown渲染方法
 const renderMarkdown = (content) => {
   return DOMPurify.sanitize(marked(content || ''));
 };
+
+// 组件挂载时获取简历列表
+onMounted(() => {
+	fetchResumes();
+});
 </script>
 
 <style scoped>

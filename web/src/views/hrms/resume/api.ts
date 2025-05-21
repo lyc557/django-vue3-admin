@@ -1,4 +1,6 @@
 import { request } from '/@/utils/service';
+import { UserPageQuery, AddReq, EditReq, InfoReq, PageQuery } from '@fast-crud/fast-crud';
+
 const apiPrefix = '/api/hrms/resume/';
 
 /**
@@ -27,5 +29,13 @@ export function AnalyzeResume(data: { file_id: string; job_description?: string 
     url: apiPrefix+'analyze',
     method: 'post',
     data,
+  });
+}
+
+export function GetList(params: any) {
+  return request({
+    url: apiPrefix,
+    method: 'get',
+    params,
   });
 }
