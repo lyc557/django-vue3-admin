@@ -53,6 +53,16 @@ class DocumentViewSet(CustomModelViewSet):
     filterset_fields = ['category', 'status', 'creator']
     search_fields = ['title', 'content']
 
+    def create(self, request, *args, **kwargs):
+        """
+        创建文档并打印POST参数
+        """
+        print('=== POST 参数 ===')
+        print('请求数据:', request.data)
+        print('请求头:', request.headers)
+        
+        return super().create(request, *args, **kwargs)
+
     def get_serializer_class(self):
         if self.action in ['retrieve']:
             return DocumentDetailSerializer

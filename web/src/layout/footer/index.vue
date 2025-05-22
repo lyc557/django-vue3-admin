@@ -1,7 +1,6 @@
 <template>
 	<div class="layout-footer pb5 pt2">
 		<div class="layout-footer-warp">
-			<div>Powered by luyangcai Copyright ©lyc557</div>
 		</div>
 	</div>
 </template>
