@@ -54,3 +54,16 @@ export function GetInfo(id: string) {
     method: 'get',
   });
 }
+
+/**
+ * 发送聊天消息
+ * @param {Object} data - 聊天消息数据
+ */
+export function SendChatMessage(data: { message: string }){
+  return request({
+    url: apiPrefix + 'chat'+ '/',
+    method: 'post',
+    data,
+  });
+}
+

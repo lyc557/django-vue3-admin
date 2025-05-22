@@ -1,7 +1,7 @@
 # ... existing code ...
 import os
 import json
-
+import traceback
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.conf import settings
@@ -224,7 +224,6 @@ class ResumeViewSet(CustomModelViewSet):
                 'upload_time': hit['_source']['metadata'].get('upload_time', '')
             }
             resumes.append(resume)
-            print("姓名：", resume['name'])
         # 获取分页参数
         page = int(request.query_params.get('page', 1))
         size = int(request.query_params.get('size', 10))
@@ -241,4 +240,180 @@ class ResumeViewSet(CustomModelViewSet):
             'size': size,
             'data': paged_resumes
         })
-    
+        
+    @action(methods=["POST"], detail=False, url_path="chat")
+    def handle_chat(self, request, *args, **kwargs):
+        if request.method == 'OPTIONS':
+            return _build_cors_preflight_response()
+        
+        try:
+            data = request.get_json()
+            message = data.get('message', '')
+            if not message:
+                return Response({"code": 4000, "msg": "用户对话内容为空"})
+            
+            # 调用DeepSeekChat处理消息
+            response = chatToLLM(message)
+
+            # 解析LLM返回的内容
+            try:
+                parsed_response = parse_llm_response(response)
+            except ValueError as e:
+                return Response({"code": 4000, "msg": f'解析LLM返回内容时出错: {str(e)}'})
+            # 如果需要搜索，连接ES并执行搜索 ,不需要连接ES时，直接返回
+            if not parsed_response['need_search']:
+                return Response({
+                    'success': True,
+                    'need_search': False,
+                    'reply': parsed_response['reply']
+                })
+            # 简历列表
+            candidates = []
+            # 构建搜索条件
+            query = {
+                "bool": {
+                    "must": []
+                }
+            }
+
+            # 构建搜索条件
+            search_criteria = parsed_response['search_criteria']
+            # 添加各种搜索条件
+            if 'name' in search_criteria and search_criteria['name']:
+                query['bool']['must'].append({
+                    "match": {"metadata.name": search_criteria['name']}
+                })
+            
+            if 'email' in search_criteria and search_criteria['email']:
+                query['bool']['must'].append({
+                    "match": {"metadata.email": search_criteria['email']}
+                })
+            
+            if 'phone' in search_criteria and search_criteria['phone']:
+                query['bool']['must'].append({
+                    "match": {"metadata.phone": search_criteria['phone']}
+                })
+            
+            if 'skills' in search_criteria and search_criteria['skills']:
+                # 处理skills作为列表的情况
+                skill_queries = []
+                for skill in search_criteria['skills']:
+                    skill_queries.append({
+                        "match": {"metadata.skills": skill}
+                    })
+                    
+                if skill_queries:
+                    query['bool']['must'].append({
+                        "bool": {
+                            "should": skill_queries,
+                            "minimum_should_match": 1
+                        }
+                    })
+
+            if 'experience' in search_criteria and search_criteria['experience']:
+                query['bool']['must'].append({
+                    "match": {"metadata.experience": search_criteria['experience']}
+                })
+
+            if 'education' in search_criteria and search_criteria['education']:
+                query['bool']['must'].append({
+                    "match": {"metadata.education": search_criteria['education']}
+                })
+            
+            if 'projects' in search_criteria and search_criteria['projects']:
+                # 处理projects作为列表的情况
+                project_queries = []
+                for project in search_criteria['projects']:
+                    project_queries.append({
+                        "match": {"metadata.projects": project}
+                    })
+                
+                if project_queries:
+                    query['bool']['must'].append({
+                        "bool": {
+                            "should": project_queries,
+                            "minimum_should_match": 1
+                        }
+                    })
+
+            if 'gender' in search_criteria and search_criteria['gender']:
+                query['bool']['must'].append({
+                    "match": {"metadata.gender": search_criteria['gender']}
+                })
+            
+            if 'score_range' in search_criteria and search_criteria['score_range']:
+                query['bool']['must'].append({
+                    "range": {"metadata.score": {
+                        "gte": search_criteria['score_range'][0],
+                        "lte": search_criteria['score_range'][1]
+                    }}
+                })
+            
+            if 'other' in search_criteria and search_criteria['other']:
+                query['bool']['must'].append({
+                    "match": {"metadata.other": search_criteria['other']}
+                })
+
+            try:
+                # 连接ES数据库
+                es = ESVectorDB(ES_URL, ES_USERNAME, ES_PASSWORD, ES_VERIFY_CERTS)
+                # 执行搜索
+                results = es.search_documents(
+                    index_name=ES_INDEX_NAME,
+                    query=query,
+                    size=10
+                )
+
+                print(f"搜索到{results['hits']['total']['value']}条数据")
+            except Exception as e:
+                print(f"搜索候选人失败: {str(e)}")
+                parsed_response['reply'] += "\n\n搜索数据库时发生错误，请稍后重试。"
+            # 处理搜索结果
+            for hit in results['hits']['hits']:
+                candidate = {
+                    'id': hit['_id'],
+                    'name': hit['_source']['metadata']['name'],
+                    'phone': hit['_source']['metadata'].get('phone', ''),
+                    'email': hit['_source']['metadata'].get('email', ''),
+                    'education': hit['_source']['metadata'].get('education', ''),
+                    'score': hit['_source']['metadata'].get('score', ''),
+                    'filename': hit['_source']['metadata']['filename'],
+                    'upload_time': hit['_source']['metadata'].get('upload_time', '')
+                }
+                candidates.append(candidate)
+
+
+            # 将搜索结果添加到回复中
+            parsed_response['reply'] += f"\n\n找到以下{len(candidates)}位候选人：\n"
+            for candidate in candidates:
+                parsed_response['reply'] += f"\n- {candidate['name']} | {candidate['education']} | 评分：{candidate['score']}"
+            
+                    # 获取分页参数
+            page = int(request.args.get('page', 1))
+            size = int(request.args.get('size', 10))
+            
+            # 计算分页数据
+            start = (page - 1) * size
+            end = start + size
+            paged_resumes = candidates[start:end]
+            
+            return Response({
+                'success': True,
+                'need_search': True,
+                'reply': parsed_response['reply'],  # 按照要求将响应放在data.reply字段中
+                'data': {
+                    'total': len(paged_resumes),
+                    'page': page,
+                    'size': size,
+                    'data': paged_resumes
+                }
+            })
+            
+       
+        except Exception as e:
+            print(f"聊天处理失败: {str(e)}\n错误类型: {type(e).__name__}\n完整堆栈: {traceback.format_exc()}")
+            return Response({
+                'error': f'聊天处理失败: {str(e)}',
+                'error_type': type(e).__name__,
+                'stack_trace': traceback.format_exc().splitlines()
+            }, status=500)  # 使用status参数而不是元组

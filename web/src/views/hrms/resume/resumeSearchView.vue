@@ -93,11 +93,12 @@
 <script lang="ts" setup name="dept">
 import { ref, nextTick, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
+// 移除 axios 导入
+// import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import { marked } from 'marked'; // 添加Markdown解析器
 import DOMPurify from 'dompurify';
-import { GetList, GetInfo } from './api';
+import { GetList, GetInfo, SendChatMessage } from './api';
 import { APIResponseData } from '../types';
 
 const router = useRouter();
@@ -172,8 +173,8 @@ const chatMessages = ref([]);
       isLoading.value = true;
 
       try {
-        // 调用AI接口
-        const response = await axios.post('/api/chat', {
+        // 调用AI接口，使用 api.ts 中的方法替代 axios
+        const response = await SendChatMessage({
           message: userInput.value
         });
 
