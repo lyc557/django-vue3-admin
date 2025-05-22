@@ -189,7 +189,7 @@
         :auto-upload="true"
         :accept="'.doc,.docx,.pdf,.md,.txt'"
         :max-size="10"
-        :tip-text="'支持Word、PDF、Markdown和文本文件，单个文件不超过10MB'"
+        :tip-text="'支持Word、PDF、Markdown和文本文件，单个文件不超过100MB'"
         :show-upload-list="true"
         @upload-success="handleBatchUploadSuccess"
         @upload-error="handleBatchUploadError"

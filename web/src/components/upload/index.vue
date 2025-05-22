@@ -19,12 +19,6 @@
       :file-list="fileList"
       :http-request="customUploadRequest"
     >
-      <template #trigger>
-        <slot name="trigger">
-          <el-button type="primary">选择文件</el-button>
-        </slot>
-      </template>
-      
       <template #default>
         <slot>
           <div v-if="drag" class="el-upload__text">
@@ -151,11 +145,11 @@ const props = defineProps({
   },
   maxSize: {
     type: Number,
-    default: 10 // 默认10MB
+    default: 100 // 默认10MB
   },
   tipText: {
     type: String,
-    default: '支持多种文件格式，单个文件不超过10MB'
+    default: '支持多种文件格式，单个文件不超过100MB'
   }
 })
 
