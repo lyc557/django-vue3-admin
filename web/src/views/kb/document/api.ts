@@ -80,3 +80,10 @@ export function GetTagList() {
     method: 'get',
   });
 }
+
+export function GetCategoryList（）{
+  return request({
+    url: '/api/kb/category/',
+    method: 'get',
+  });
+}
