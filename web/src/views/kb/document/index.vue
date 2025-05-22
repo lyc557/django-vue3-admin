@@ -127,8 +127,8 @@
         </el-form-item>
         <el-form-item label="状态">
           <el-radio-group v-model="documentForm.status">
-            <el-radio label="draft">草稿</el-radio>
-            <el-radio label="published">发布</el-radio>
+            <el-radio label="0">草稿</el-radio>
+            <el-radio label="1">发布</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
@@ -137,7 +137,7 @@
         <el-button type="primary" @click="() => handleSave(documentForm)">保存</el-button>
       </template>
     </el-dialog>
-
+，，
     <!-- 预览对话框 -->
     <el-dialog
       v-model="previewVisible"
@@ -237,7 +237,7 @@ const documentForm = ref({
   category: '',
   tags: [],
   content: '',
-  status: 'draft',
+  status: '0',
   attachments: []
 })
 
@@ -261,10 +261,10 @@ const handleCreate = () => {
   dialogType.value = 'create'
   documentForm.value = {
     title: '123',
-    category: '123',
-    tags: ['java'],
+    category: '技术文档',
+    tags: ['Vue', 'JavaScript'],
     content: '1234444',
-    status: 'draft',
+    status: '0',
     attachments: []
   }
   dialogVisible.value = true

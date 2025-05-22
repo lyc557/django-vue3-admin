@@ -48,8 +48,22 @@ class DocumentSerializer(serializers.ModelSerializer):
     """文档序列化器"""
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
     creator_name = serializers.CharField(source='creator.name', read_only=True)
-    tags_info = DocumentTagSerializer(source='tags', many=True, read_only=True)
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=DocumentTag.objects.all(),
+        many=True,
+        required=False
+    )
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=DocumentCategory.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    status = serializers.ChoiceField(
+        choices=Document.STATUS_CHOICES,
+        required=False,
+        default=0
+    )
     
     class Meta:
         model = Document

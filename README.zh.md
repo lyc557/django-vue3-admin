@@ -93,6 +93,9 @@ yarn dev
 	python3 manage.py init
 7. 初始化省市县数据:
 	python3 manage.py init_area
+8. 初始化知识库相关数据
+	python3 manage.py init_knowledge
+
 8. 启动项目
 	# 开发环境执行
 	python3 manage.py runserver 0.0.0.0:8000
