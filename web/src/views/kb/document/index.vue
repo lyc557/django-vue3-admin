@@ -134,7 +134,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSave">保存</el-button>
+        <el-button type="primary" @click="() => handleSave(documentForm)">保存</el-button>
       </template>
     </el-dialog>
 
@@ -298,9 +298,9 @@ const handlePreview = (row) => {
  * @param {object} formData - 表单数据对象
  */
 const handleSave = async (formData) => {
+  // 确保formData已正确传递
+  console.log('表单数据:', formData);
   try {
-    // 调用API进行保存
-    console.log(formData);
     const res = await AddObj(formData);
     // 根据实际业务处理保存成功后的逻辑
     ElMessage.success('保存成功');
