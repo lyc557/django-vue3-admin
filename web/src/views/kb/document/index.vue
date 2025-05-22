@@ -137,7 +137,6 @@
         <el-button type="primary" @click="() => handleSave(documentForm)">保存</el-button>
       </template>
     </el-dialog>
-，，
     <!-- 预览对话框 -->
     <el-dialog
       v-model="previewVisible"
@@ -212,7 +211,7 @@ import { Search, UploadFilled } from '@element-plus/icons-vue'
 import { MdEditor, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import fileUploader from '/@/components/upload/index.vue'
-import { GetList,  AddObj} from './api'
+import { GetList,  AddObj, GetCategoryList, GetTagList} from './api'
 import { APIResponseData } from '/@/api/interface'
 
 // 状态定义
@@ -387,56 +386,26 @@ const fetchDocuments = async () => {
 }
 
 // 获取分类和标签数据
-const fetchCategoriesAndTags = async () => {
+const loadData = async () => {
   try {
-    // 模拟分类数据
-    categories.value = [
-      { value: '技术文档', label: '技术文档' },
-      { value: '产品文档', label: '产品文档' },
-      { value: '用户手册', label: '用户手册' }
-    ]
+    // 获取分类数据
+    const categoryRes = await GetCategoryList()
+    categories.value = categoryRes.data.map(item => ({
+      value: item.name,
+      label: item.name
+    }))
     
-    // 模拟标签数据
-    tags.value = ['Vue', 'JavaScript', 'Python', 'Django', 'API']
+    // 获取标签数据
+    const tagRes = await GetTagList()
+    tags.value = tagRes.data.map(item => item.name)
   } catch (error) {
-    console.error(error)
+    console.error('获取分类或标签数据失败:', error)
   }
 }
 
-// 批量上传相关
-const uploadDialogVisible = ref(false)
-const uploadedFiles = ref([])
-
-// 处理文件上传成功
-const handleBatchUploadSuccess = ({ file, response }) => {
-  ElMessage.success(`文件 ${file.name} 上传成功`)
-  // 这里可以根据需要处理上传成功后的逻辑，例如刷新文档列表
-  fetchDocuments()
-}
-
-// 处理文件上传错误
-const handleBatchUploadError = ({ file, error }) => {
-  ElMessage.error(`文件 ${file.name} 上传失败: ${error.message || '未知错误'}`)
-}
-
-// 处理上传进度
-const handleUploadProgress = ({ file, event }) => {
-  // 可以根据需要处理上传进度
-}
-
-// 处理文件被移除
-const handleFileRemoved = (file) => {
-  // 可以根据需要处理文件被移除的逻辑
-}
-
-// 清空上传列表
-const handleClearUploadList = () => {
-  uploadedFiles.value = []
-}
-
+// 在组件挂载时调用
 onMounted(() => {
-  fetchDocuments()  // 获取文档列表
-  fetchCategoriesAndTags() // 获取分类和标签数据
+  loadData()
 })
 
 </script>
