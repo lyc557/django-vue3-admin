@@ -14,10 +14,28 @@
           </el-button>
         </template>
       </el-input>
+    </div>
+
+    <div class="operation-bar">
       
       <el-button type="primary" @click="handleCreate">
         新建文档
       </el-button>
+
+      <el-upload
+        action="/api/documents/batch-upload"
+        :auto-upload="true"
+        :show-file-list="true"
+        :multiple="true"
+        accept=".doc,.docx,.pdf,.md,.txt"
+        :before-upload="handleBeforeUpload"
+        :on-success="handleBatchUploadSuccess"
+        :on-error="handleBatchUploadError"
+      >
+        <el-button>
+          批量上传
+        </el-button>
+      </el-upload>
     </div>
 
     <!-- 文档列表 -->
@@ -350,10 +368,42 @@ const fetchCategoriesAndTags = async () => {
   }
 }
 
+// 批量上传相关函数
+const handleBeforeUpload = (file) => {
+  // 检查文件类型
+  const fileTypes = ['.doc', '.docx', '.pdf', '.md', '.txt']
+  const isValidType = fileTypes.some(type => file.name.toLowerCase().endsWith(type))
+  
+  if (!isValidType) {
+    ElMessage.error('只能上传Word、PDF、Markdown或文本文件!')
+    return false
+  }
+  
+  // 检查文件大小，限制为10MB
+  const isLt10M = file.size / 1024 / 1024 < 10
+  if (!isLt10M) {
+    ElMessage.error('文件大小不能超过10MB!')
+    return false
+  }
+  
+  return true
+}
+
+const handleBatchUploadSuccess = (response, file, fileList) => {
+  ElMessage.success(`文件 ${file.name} 上传成功`)
+  // 刷新文档列表
+  fetchDocuments()
+}
+
+const handleBatchUploadError = (error, file, fileList) => {
+  ElMessage.error(`文件 ${file.name} 上传失败: ${error.message || '未知错误'}`)
+}
+
 onMounted(() => {
   fetchDocuments()
   fetchCategoriesAndTags()
 })
+
 </script>
 
 <style scoped>
@@ -367,6 +417,11 @@ onMounted(() => {
   gap: 10px;
 }
 
+.operation-bar {
+  display: flex;
+  margin-bottom: 20px;
+  gap: 10px;
+}
 .search-input {
   width: 300px;
 }
