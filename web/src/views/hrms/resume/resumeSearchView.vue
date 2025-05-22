@@ -66,44 +66,19 @@
       <div v-if="currentResume" class="resume-detail">
         <h2>{{ currentResume.name }} 的简历</h2>
         
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="姓名">{{ currentResume.name }}</el-descriptions-item>
-          <el-descriptions-item label="电话">{{ currentResume.phone }}</el-descriptions-item>
-          <el-descriptions-item label="邮箱">{{ currentResume.email }}</el-descriptions-item>
-          <el-descriptions-item label="教育背景">{{ currentResume.education }}</el-descriptions-item>
-          <el-descriptions-item label="AI评分">
-            <el-tag :type="getScoreType(currentResume.score)">{{ currentResume.score }}</el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="上传时间">{{ currentResume.upload_time }}</el-descriptions-item>
-        </el-descriptions>
-        
-        <div class="resume-section" v-if="currentResume.work_experience">
-          <h3>工作经历</h3>
-          <ul>
-            <li v-for="(exp, index) in currentResume.work_experience" :key="index">{{ exp }}</li>
-          </ul>
-        </div>
-        
-        <div class="resume-section" v-if="currentResume.skills">
-          <h3>技能</h3>
-          <ul>
-            <li v-for="(skill, index) in currentResume.skills" :key="index">{{ skill }}</li>
-          </ul>
-        </div>
-        
-        <div class="resume-section" v-if="currentResume.projects">
-          <h3>项目经历</h3>
-          <div v-for="(project, index) in currentResume.projects" :key="index" class="project-item">
-            <h4>{{ project.name }}</h4>
-            <p><strong>角色：</strong>{{ project.role }}</p>
-            <p><strong>描述：</strong>{{ project.description }}</p>
-          </div>
-        </div>
-        
-        <div class="resume-section" v-if="currentResume.score_details">
-          <h3>AI评分详情</h3>
-          <p>{{ currentResume.score_details }}</p>
-        </div>
+        <el-descriptions :column="1" border>
+        <el-descriptions-item label="姓名">{{ currentResume.name }}</el-descriptions-item>
+        <el-descriptions-item label="电话">{{ currentResume.phone }}</el-descriptions-item>
+        <el-descriptions-item label="邮箱">{{ currentResume.email }}</el-descriptions-item>
+        <el-descriptions-item label="教育背景">{{ currentResume.education }}</el-descriptions-item>
+        <el-descriptions-item label="AI评分">
+          <el-tag :type="getScoreType(currentResume.score)">{{ currentResume.score }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="工作经验">{{ currentResume.work_experience }}</el-descriptions-item>
+        <el-descriptions-item label="技能">
+          <el-tag v-for="(skill, index) in currentResume.skills" :key="index" type="info" style="margin-right: 5px;">{{ skill }}</el-tag>
+        </el-descriptions-item>
+      </el-descriptions>
       </div>
       
       <template #footer>
@@ -150,15 +125,9 @@ const dialogVisible = ref(false);
 const currentResume = ref(null);
 
 // 修改查看详情方法
-const viewDetail = (resume) => {
-  // 获取完整的简历信息
-  getResumeDetail(resume.id).then(data => {
-    currentResume.value = data;
+const viewDetail = (resume) => { 
+    currentResume.value = resume;
     dialogVisible.value = true;
-  }).catch(error => {
-    ElMessage.error('获取简历详情失败');
-    console.error('获取简历详情失败:', error);
-  });
 };
 
 // 关闭对话框

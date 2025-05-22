@@ -193,6 +193,16 @@ class ResumeViewSet(CustomModelViewSet):
                 'error_type': type(e).__name__
             })
         
+        if not results:
+            return Response({
+                'code': 4000,
+                'error': '获取简历列表失败',
+                'error_type': 'NoResumeFound'
+            })
+        
+        # 打印查询结果
+        # print("查询结果：", results)
+
         print(f"查到{results['hits']['total']['value']}条数据，本次返回{len(results['hits']['hits'])}条")
 
         # 处理返回结果
@@ -204,7 +214,12 @@ class ResumeViewSet(CustomModelViewSet):
                 'phone': hit['_source']['metadata'].get('phone', ''),
                 'email': hit['_source']['metadata'].get('email', ''),
                 'education': hit['_source']['metadata'].get('education', ''),
+                'work_experience': hit['_source']['metadata'].get('work_experience', ''),
+                'skills': hit['_source']['metadata'].get('skills', ''),
+                'projects': hit['_source']['metadata'].get('projects', []),
+                'other': hit['_source']['metadata'].get('other', ''),
                 'score': hit['_source']['metadata'].get('score', ''),
+                'score_details': hit['_source']['metadata'].get('score_details', ''),
                 'filename': hit['_source']['metadata']['filename'],
                 'upload_time': hit['_source']['metadata'].get('upload_time', '')
             }
