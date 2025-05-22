@@ -37,12 +37,12 @@ class Document(CoreModel):
         (0, "草稿"),
         (1, "已发布"),
     )
-    
+
     title = models.CharField(max_length=200, verbose_name="文档标题")
     content = models.TextField(verbose_name="文档内容", help_text="支持Markdown格式")
     category = models.ForeignKey(DocumentCategory, on_delete=models.SET_NULL, null=True, verbose_name="所属分类")
     tags = models.ManyToManyField(DocumentTag, blank=True, verbose_name="标签")
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="创建人", related_name="created_documents")
+    creator = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, verbose_name="创建人", related_name="created_documents")
     status = models.IntegerField(choices=STATUS_CHOICES, default=0, verbose_name="状态")
     view_count = models.IntegerField(default=0, verbose_name="浏览次数")
     vector_id = models.CharField(max_length=100, null=True, blank=True, verbose_name="向量ID", help_text="用于AI检索")

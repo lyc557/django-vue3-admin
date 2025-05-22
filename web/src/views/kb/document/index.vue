@@ -212,7 +212,7 @@ import { Search, UploadFilled } from '@element-plus/icons-vue'
 import { MdEditor, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import fileUploader from '/@/components/upload/index.vue'
-import { GetList } from './api'
+import { GetList,  AddObj} from './api'
 import { APIResponseData } from '/@/api/interface'
 
 // 状态定义
@@ -260,10 +260,10 @@ const handleSearch = async () => {
 const handleCreate = () => {
   dialogType.value = 'create'
   documentForm.value = {
-    title: '',
-    category: '',
-    tags: [],
-    content: '',
+    title: '123',
+    category: '123',
+    tags: ['java'],
+    content: '1234444',
     status: 'draft',
     attachments: []
   }
@@ -292,16 +292,25 @@ const handlePreview = (row) => {
   previewVisible.value = true
 }
 
-const handleSave = async () => {
+// 保存文档方法
+/**
+ * 调用文档新增API，保存文档数据
+ * @param {object} formData - 表单数据对象
+ */
+const handleSave = async (formData) => {
   try {
-    // TODO: 调用保存API
-    ElMessage.success('保存成功')
-    dialogVisible.value = false
-    await fetchDocuments()
+    // 调用API进行保存
+    console.log(formData);
+    const res = await AddObj(formData);
+    // 根据实际业务处理保存成功后的逻辑
+    ElMessage.success('保存成功');
+    // 可选：刷新列表或关闭弹窗等
+    // emit('success', res);
   } catch (error) {
-    console.error(error)
+    // 错误处理
+    ElMessage.error('保存失败，请重试');
   }
-}
+};
 
 const showHistory = async (row) => {
   // TODO: 获取历史版本数据
