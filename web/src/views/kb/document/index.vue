@@ -17,25 +17,12 @@
     </div>
 
     <div class="operation-bar">
-      
       <el-button type="primary" @click="handleCreate">
         新建文档
       </el-button>
-
-      <el-upload
-        action="/api/documents/batch-upload"
-        :auto-upload="true"
-        :show-file-list="true"
-        :multiple="true"
-        accept=".doc,.docx,.pdf,.md,.txt"
-        :before-upload="handleBeforeUpload"
-        :on-success="handleBatchUploadSuccess"
-        :on-error="handleBatchUploadError"
-      >
-        <el-button>
-          批量上传
-        </el-button>
-      </el-upload>
+      <el-button @click="uploadDialogVisible = true">
+        批量上传
+      </el-button>
     </div>
 
     <!-- 文档列表 -->
@@ -187,15 +174,44 @@
         </el-timeline-item>
       </el-timeline>
     </el-dialog>
+
+    <!-- 批量上传对话框 -->
+    <el-dialog
+      v-model="uploadDialogVisible"
+      title="批量上传文档"
+      width="60%"
+    >
+      <FileUploader
+        v-model="uploadedFiles"
+        :upload-url="'/api/documents/batch-upload'"
+        :multiple="true"
+        :drag="true"
+        :auto-upload="true"
+        :accept="'.doc,.docx,.pdf,.md,.txt'"
+        :max-size="10"
+        :tip-text="'支持Word、PDF、Markdown和文本文件，单个文件不超过10MB'"
+        :show-upload-list="true"
+        @upload-success="handleBatchUploadSuccess"
+        @upload-error="handleBatchUploadError"
+        @upload-progress="handleUploadProgress"
+        @file-removed="handleFileRemoved"
+      />
+      
+      <template #footer>
+        <el-button @click="uploadDialogVisible = false">关闭</el-button>
+        <el-button type="primary" @click="handleClearUploadList">清空列表</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
+import { Search, UploadFilled } from '@element-plus/icons-vue'
 import { MdEditor, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
+import FileUploader from '/@/components/Upload/FileUploader.vue'
 
 // 状态定义
 const loading = ref(false)
@@ -368,35 +384,35 @@ const fetchCategoriesAndTags = async () => {
   }
 }
 
-// 批量上传相关函数
-const handleBeforeUpload = (file) => {
-  // 检查文件类型
-  const fileTypes = ['.doc', '.docx', '.pdf', '.md', '.txt']
-  const isValidType = fileTypes.some(type => file.name.toLowerCase().endsWith(type))
-  
-  if (!isValidType) {
-    ElMessage.error('只能上传Word、PDF、Markdown或文本文件!')
-    return false
-  }
-  
-  // 检查文件大小，限制为10MB
-  const isLt10M = file.size / 1024 / 1024 < 10
-  if (!isLt10M) {
-    ElMessage.error('文件大小不能超过10MB!')
-    return false
-  }
-  
-  return true
-}
+// 批量上传相关
+const uploadDialogVisible = ref(false)
+const uploadedFiles = ref([])
 
-const handleBatchUploadSuccess = (response, file, fileList) => {
+// 处理文件上传成功
+const handleBatchUploadSuccess = ({ file, response }) => {
   ElMessage.success(`文件 ${file.name} 上传成功`)
-  // 刷新文档列表
+  // 这里可以根据需要处理上传成功后的逻辑，例如刷新文档列表
   fetchDocuments()
 }
 
-const handleBatchUploadError = (error, file, fileList) => {
+// 处理文件上传错误
+const handleBatchUploadError = ({ file, error }) => {
   ElMessage.error(`文件 ${file.name} 上传失败: ${error.message || '未知错误'}`)
+}
+
+// 处理上传进度
+const handleUploadProgress = ({ file, event }) => {
+  // 可以根据需要处理上传进度
+}
+
+// 处理文件被移除
+const handleFileRemoved = (file) => {
+  // 可以根据需要处理文件被移除的逻辑
+}
+
+// 清空上传列表
+const handleClearUploadList = () => {
+  uploadedFiles.value = []
 }
 
 onMounted(() => {
@@ -422,6 +438,7 @@ onMounted(() => {
   margin-bottom: 20px;
   gap: 10px;
 }
+
 .search-input {
   width: 300px;
 }
@@ -441,5 +458,17 @@ onMounted(() => {
   margin: 10px 0;
   display: flex;
   gap: 20px;
+}
+
+.upload-demo {
+  margin-bottom: 20px;
+}
+
+.upload-status {
+  margin-top: 20px;
+}
+
+.error-message {
+  color: #F56C6C;
 }
 </style>
