@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class HrmsConfig(AppConfig):
-    name = 'dvadmin.hrms'
-    verbose_name = '人力资源管理系统'
+class KBConfig(AppConfig):
+    name = 'dvadmin.kb'
+    verbose_name = 'SmartKB知识库'

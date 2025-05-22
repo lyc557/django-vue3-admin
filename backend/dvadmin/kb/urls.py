@@ -13,5 +13,7 @@ router.register("version", DocumentVersionViewSet)
 router.register("attachment", DocumentAttachmentViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
+    # 这里可以添加不适合使用ModelViewSet的接口
 ]
+
+urlpatterns += router.urls

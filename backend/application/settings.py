@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "channels",
     "dvadmin.system",
     'dvadmin.hrms',  # 添加 HRMS 应用
+    'dvadmin.kb',  # 添加 KB 应用,
 ]
 
 MIDDLEWARE = [

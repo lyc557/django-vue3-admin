@@ -212,6 +212,7 @@ import { Search, UploadFilled } from '@element-plus/icons-vue'
 import { MdEditor, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import fileUploader from '/@/components/upload/index.vue'
+import { GetList } from './api'
 
 // 状态定义
 const loading = ref(false)
@@ -346,20 +347,30 @@ const fetchDocuments = async () => {
   loading.value = true
   try {
     // TODO: 调用获取文档列表API
+    
+    // 调用文档列表API
+    const params = {
+      page: currentPage.value,
+      pageSize: pageSize.value,
+      search: searchQuery.value
+    }
+    const { data } = await GetList(params)
+    documents.value = data.items
+    total.value = data.total
     // 模拟数据
-    documents.value = [
-      {
-        id: 1,
-        title: '示例文档',
-        category: '技术文档',
-        tags: ['Vue', 'JavaScript'],
-        status: 'published',
-        creator: 'admin',
-        createTime: '2023-01-01 12:00:00',
-        content: '# 示例文档\n这是一个示例文档内容'
-      }
-    ]
-    total.value = 1
+    // documents.value = [
+    //   {
+    //     id: 1,
+    //     title: '示例文档',
+    //     category: '技术文档',
+    //     tags: ['Vue', 'JavaScript'],
+    //     status: 'published',
+    //     creator: 'admin',
+    //     createTime: '2023-01-01 12:00:00',
+    //     content: '# 示例文档\n这是一个示例文档内容'
+    //   }
+    // ]
+    // total.value = 1
     loading.value = false
   } catch (error) {
     console.error(error)
@@ -416,8 +427,8 @@ const handleClearUploadList = () => {
 }
 
 onMounted(() => {
-  fetchDocuments()
-  fetchCategoriesAndTags()
+  fetchDocuments()  // 获取文档列表
+  fetchCategoriesAndTags() // 获取分类和标签数据
 })
 
 </script>

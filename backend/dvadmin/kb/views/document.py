@@ -8,7 +8,7 @@ from django.db.models import Q
 from dvadmin.utils.viewset import CustomModelViewSet
 from dvadmin.kb.models import Document, DocumentCategory, DocumentTag, DocumentVersion, DocumentAttachment
 from dvadmin.kb.serializers import (
-    DocumentSerializer, DocumentDetailSerializer, DocumentCategorySerializer,
+    DocumentSerializer, DocumentCategorySerializer,
     DocumentTagSerializer, DocumentVersionSerializer, DocumentAttachmentSerializer
 )
 
@@ -52,13 +52,11 @@ class DocumentViewSet(CustomModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['category', 'status', 'creator']
     search_fields = ['title', 'content']
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrAdmin]
-    
+
     def get_serializer_class(self):
         if self.action in ['retrieve']:
             return DocumentDetailSerializer
-        return DocumentSerializer
-    
+        return DocumentSerializer    
     def get_queryset(self):
         queryset = super().get_queryset()
         # 关键词搜索

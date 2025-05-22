@@ -63,4 +63,5 @@ class DocumentDetailSerializer(DocumentSerializer):
     creator = UserSimpleSerializer(read_only=True)
     
     class Meta(DocumentSerializer.Meta):
-        fields = DocumentSerializer.Meta.fields + ('attachments', 'versions')
+        # 不要尝试连接字符串和元组
+        fields = '__all__'  # 保持与父类相同的字段设置
