@@ -260,7 +260,7 @@ const handleCreate = () => {
   dialogType.value = 'create'
   documentForm.value = {
     title: '123',
-    category: '技术文档',
+    category: '124',
     tags: ['Vue', 'JavaScript'],
     content: '1234444',
     status: '0',
@@ -391,13 +391,17 @@ const loadData = async () => {
     // 获取分类数据
     const categoryRes = await GetCategoryList()
     categories.value = categoryRes.data.map(item => ({
-      value: item.name,
+      value: item.id,
       label: item.name
     }))
     
     // 获取标签数据
     const tagRes = await GetTagList()
-    tags.value = tagRes.data.map(item => item.name)
+    tags.value = tagRes.data.map(item => ({
+      value: item.id,
+      label: item.name
+    }))
+
   } catch (error) {
     console.error('获取分类或标签数据失败:', error)
   }
