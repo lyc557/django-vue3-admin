@@ -80,7 +80,9 @@ export function GetTagList() {
     method: 'get',
   });
 }
-
+/**
+ * 获取文档分类列表
+ */
 export function GetCategoryList（）{
   return request({
     url: '/api/kb/category/',
