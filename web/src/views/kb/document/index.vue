@@ -205,7 +205,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup name="document">
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, UploadFilled } from '@element-plus/icons-vue'
@@ -213,6 +213,7 @@ import { MdEditor, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import fileUploader from '/@/components/upload/index.vue'
 import { GetList } from './api'
+import { APIResponseData } from '/@/api/interface'
 
 // 状态定义
 const loading = ref(false)
@@ -346,15 +347,13 @@ const handleCurrentChange = async (val) => {
 const fetchDocuments = async () => {
   loading.value = true
   try {
-    // TODO: 调用获取文档列表API
-    
-    // 调用文档列表API
     const params = {
       page: currentPage.value,
       pageSize: pageSize.value,
       search: searchQuery.value
     }
-    const { data } = await GetList(params)
+    let res: APIResponseData = await GetList(params);
+
     documents.value = data.items
     total.value = data.total
     // 模拟数据

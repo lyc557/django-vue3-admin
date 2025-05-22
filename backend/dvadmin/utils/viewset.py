@@ -100,7 +100,7 @@ class CustomModelViewSet(ModelViewSet, ImportSerializerMixin, ExportSerializerMi
         return ret.values_list('field__field_name', flat=True)
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data, request=request)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         return DetailResponse(data=serializer.data, msg="新增成功")
@@ -109,9 +109,9 @@ class CustomModelViewSet(ModelViewSet, ImportSerializerMixin, ExportSerializerMi
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = self.get_serializer(page, many=True, request=request)
+            serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(queryset, many=True, request=request)
+        serializer = self.get_serializer(queryset, many=True)
         return SuccessResponse(data=serializer.data, msg="获取成功")
 
     def retrieve(self, request, *args, **kwargs):
@@ -122,7 +122,7 @@ class CustomModelViewSet(ModelViewSet, ImportSerializerMixin, ExportSerializerMi
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, request=request, partial=partial)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
