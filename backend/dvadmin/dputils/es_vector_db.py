@@ -319,7 +319,7 @@ class ESVectorDB:
             logger.error(f"索引文档失败: {e}")
             return None
 
-    def search_documents(self, index_name, query, sort=None, size=10):
+    def search_documents(self,  query, index_name=ES_INDEX_NAME,sort=None, size=10):
         """搜索ES文档"""
         try:
             # 构建查询体
@@ -447,15 +447,25 @@ def save_to_es(filename,document,parsed_data):
 
     return True
 
+
+def search_resume(query):
+    es = ESVectorDB(ES_URL,ES_USERNAME, ES_PASSWORD, ES_VERIFY_CERTS)
+    index_name = ES_INDEX_NAME
+    # 构建查询
+    query_body = query
+    # 执行查询
+    results = es.search_documents(query=query_body, index_name=index_name)
+    return results
+
 def list_resume():
     es = ESVectorDB(ES_URL,ES_USERNAME, ES_PASSWORD, ES_VERIFY_CERTS)
     index_name = ES_INDEX_NAME
     # 查询最新的10条简历
     results = es.search_documents(
-        index_name=index_name,
         query={
             "match_all": {}
         },
+        index_name=index_name,
         sort=[
             {
                 "metadata.score": {

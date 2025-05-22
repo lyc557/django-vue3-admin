@@ -177,27 +177,25 @@ const chatMessages = ref([]);
         const response = await SendChatMessage({
           message: userInput.value
         });
-
-
+        
         // 处理AI回复
-        if(response.data.error){ 
+        if(response.error){ 
           chatMessages.value.push({
             role: 'assistant',
-            content: response.data.error  // 修改为从data.reply获取回复内容
+            content: response.error
           });
-        }else{
+        } else {
           // 判断是否需要更新简历列表
-          if (response.data.need_search) {
+          if (response.need_search) {
             // 先清空简历列表
             resumeList.value = [];
-            // 从response.data.data获取数组数据并更新简历列表
-
-            resumeList.value = Array.isArray(response.data.data.data) ? response.data.data.data : [];
+            // 从response.data获取数组数据并更新简历列表
+            resumeList.value = Array.isArray(response.data.data) ? response.data.data : [];
           }
           // 添加AI回复
           chatMessages.value.push({
             role: 'assistant',
-            content: response.data.reply  // 修改为从data.reply获取回复内容
+            content: response.reply
           });
         }
 
@@ -213,7 +211,7 @@ const chatMessages = ref([]);
         console.error('发送消息失败:', error);
         chatMessages.value.push({
             role: 'assistant',
-            content: error.response?.data.error || 'Message is required'
+            content: error.message  // 修改为从data.reply获取回复内容
           });
       } finally {
         isLoading.value = false;

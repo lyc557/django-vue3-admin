@@ -2,6 +2,7 @@
 import os
 import json
 import traceback
+import re
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.conf import settings
@@ -12,8 +13,9 @@ from dvadmin.utils.json_response import DetailResponse, SuccessResponse, ErrorRe
 from dvadmin.utils.viewset import CustomModelViewSet
        # 调用简历解析接口
 from dvadmin.dputils.document_parser import parse_pdf, parse_docx
-from dvadmin.dputils.deepseek_chat import chatToLLM4Analysis
-from dvadmin.dputils.es_vector_db import save_to_es, list_resume
+from dvadmin.dputils.deepseek_chat import chatToLLM4Analysis, chatToLLM
+from dvadmin.dputils.es_vector_db import save_to_es, list_resume, search_resume
+
 
 
 class ResumeSerializer(CustomModelSerializer):
@@ -30,6 +32,52 @@ class ResumeViewSet(CustomModelViewSet):
     permission_classes = []
     queryset = Resume.objects.all()
     serializer_class = ResumeSerializer
+    
+
+
+    def __parse_llm_response__(self, response):
+        # 解析LLM返回的JSON字符串
+        try:
+            # 如果response已经是字典，直接使用
+            if isinstance(response, dict):
+                parsed_response = response
+            else:
+                # 否则按原逻辑处理字符串
+                start_idx = response.find('{')
+                end_idx = response.rfind('}') + 1
+                if start_idx == -1 or end_idx == 0:
+                    raise ValueError('LLM返回的内容中未找到有效的JSON')
+                    
+                json_str = response[start_idx:end_idx]
+                # 解析JSON字符串
+                print("LLM返回的内容：", json_str)
+                safe_json = re.sub(r'\bTrue\b', 'true', json_str)
+                safe_json = re.sub(r'\bFalse\b', 'false', safe_json)
+                safe_json = re.sub(r'\bNone\b', 'null', safe_json)
+                parsed_response = json.loads(safe_json)
+                print("解析后的内容：", parsed_response)
+            # 验证必要字段是否存在
+            required_fields = ['need_search', 'search_criteria', 'reply']
+            for field in required_fields:
+                if field not in parsed_response:
+                    raise ValueError('LLM返回的内容中未找到有效的JSON')
+
+            
+            # 如果需要搜索，验证search_criteria的字段
+            if parsed_response['need_search']:
+                required_criteria = ['name', 'skills','projects', 'experience', 'education', 'score_range', 'gender']
+                for field in required_criteria:
+                    if field not in parsed_response['search_criteria']:
+                        parsed_response['search_criteria'][field] = "" if field != 'skills' else []
+                        if field == 'score_range':
+                            parsed_response['search_criteria'][field] = [0, 100]
+            return parsed_response
+        except json.JSONDecodeError as e:
+            print(f"解析LLM返回的JSON失败: {str(e)}")
+            raise ValueError(f'解析LLM返回的JSON失败: {str(e)}')
+        except Exception as e:
+            raise ValueError(f'处理LLM返回内容时出错: {str(e)}')
+
 
     def __getfileid__(self,):
         """获取文件ID"""
@@ -243,11 +291,9 @@ class ResumeViewSet(CustomModelViewSet):
         
     @action(methods=["POST"], detail=False, url_path="chat")
     def handle_chat(self, request, *args, **kwargs):
-        if request.method == 'OPTIONS':
-            return _build_cors_preflight_response()
-        
         try:
-            data = request.get_json()
+            # 修改这一行，使用request.data而不是request.get_json()
+            data = request.data
             message = data.get('message', '')
             if not message:
                 return Response({"code": 4000, "msg": "用户对话内容为空"})
@@ -257,7 +303,7 @@ class ResumeViewSet(CustomModelViewSet):
 
             # 解析LLM返回的内容
             try:
-                parsed_response = parse_llm_response(response)
+                parsed_response = self.__parse_llm_response__(response)
             except ValueError as e:
                 return Response({"code": 4000, "msg": f'解析LLM返回内容时出错: {str(e)}'})
             # 如果需要搜索，连接ES并执行搜索 ,不需要连接ES时，直接返回
@@ -356,12 +402,9 @@ class ResumeViewSet(CustomModelViewSet):
 
             try:
                 # 连接ES数据库
-                es = ESVectorDB(ES_URL, ES_USERNAME, ES_PASSWORD, ES_VERIFY_CERTS)
                 # 执行搜索
-                results = es.search_documents(
-                    index_name=ES_INDEX_NAME,
-                    query=query,
-                    size=10
+                results = search_resume(
+                    query=query
                 )
 
                 print(f"搜索到{results['hits']['total']['value']}条数据")
@@ -389,8 +432,8 @@ class ResumeViewSet(CustomModelViewSet):
                 parsed_response['reply'] += f"\n- {candidate['name']} | {candidate['education']} | 评分：{candidate['score']}"
             
                     # 获取分页参数
-            page = int(request.args.get('page', 1))
-            size = int(request.args.get('size', 10))
+            page = int(request.query_params.get('page', 1))
+            size = int(request.query_params.get('size', 10))
             
             # 计算分页数据
             start = (page - 1) * size

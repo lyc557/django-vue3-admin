@@ -63,6 +63,7 @@ export function SendChatMessage(data: { message: string }){
   return request({
     url: apiPrefix + 'chat'+ '/',
     method: 'post',
+    timeout: 100000, // 设置超时时间为100秒（100000毫秒）
     data,
   });
 }

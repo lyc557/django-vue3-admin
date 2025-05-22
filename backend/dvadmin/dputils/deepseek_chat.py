@@ -143,6 +143,55 @@ class DeepSeekChat:
     # 使用示例
 chat = DeepSeekChat()
 
+
+def chatToLLM(message):
+    # 调用chat获取回复
+    PROMPT_TMPL = """请根据用户的问题判断是否需要查询简历数据库。你的任务是根据问题内容决定是否需要查询数据库，并给出查询条件。
+
+    判断规则：
+    1. 如果问题涉及具体求职者的信息（如姓名、技能、工作经验等），则需要查询
+    2. 如果问题要求推荐或筛选候选人，则需要查询
+    3. 如果是一般性问题或不需要具体简历数据的问题，则不需要查询
+
+    请按以下JSON格式回答：
+    {
+        "need_search": true/false,  // 是否需要查询数据库
+        "search_criteria": {        // 如果需要查询，提供查询条件
+            "name": "",             // 姓名条件（如有）
+            "email": "",            // 邮箱条件（如有）
+            "phone": "",            // 手机号码条件（如有）
+            "skills": [],           // 技能条件（如有）
+            "experience": "",       // 工作经验条件（如有）
+            "education": "",        // 教育背景条件（如有）
+            "gender": "",           // 性别条件（如有）
+            "projects": [],         // 项目条件（如有）
+            "other": "",            // 其他条件（如有）
+            "score_range": [0,100]  // 分数范围（如有）
+        }
+        "reply": ""                // 如不需要查询，或者其他信息，请在这里回复
+    }
+    当前用户问题：{{question}}"""
+
+    # 使用时替换question变量
+    prompt = PROMPT_TMPL.replace('{{question}}', message)
+    # 调用chat方法
+    print("提示词：", prompt)
+    response = chat.chat(prompt)  # 调用chat方法
+    # response = {
+    #         "need_search": true,
+    #         "search_criteria": {
+    #             "name": "",
+    #             "skills": [],
+    #             "experience": "4年以上",
+    #             "education": "985,211院校",
+    #             "score_range": [0,100],
+    #             "gender": "女"
+    #         },
+    #         "reply": ""
+    #     }
+    print("回复：", response)
+    return response
+
 def chatToLLM4Analysis(document, job_description):
     # 让大模型提取简历关键信息，获得标准格式的json以及评分
     document = document.strip()
