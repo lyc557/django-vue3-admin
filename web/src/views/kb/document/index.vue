@@ -181,7 +181,7 @@
       title="批量上传文档"
       width="60%"
     >
-      <FileUploader
+      <fileUploader
         v-model="uploadedFiles"
         :upload-url="'/api/documents/batch-upload'"
         :multiple="true"
@@ -211,7 +211,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, UploadFilled } from '@element-plus/icons-vue'
 import { MdEditor, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
-import FileUploader from '/@/components/Upload/FileUploader.vue'
+import fileUploader from '/@/components/upload/index.vue'
 
 // 状态定义
 const loading = ref(false)
