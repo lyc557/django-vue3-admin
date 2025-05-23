@@ -88,7 +88,45 @@ class DocumentViewSet(CustomModelViewSet):
     def perform_create(self, serializer):
         # 设置创建人为当前用户
         serializer.save(creator=self.request.user)
-    
+
+    @action(methods=['post'], detail=False, url_path='batch-upload')
+    def batch_upload(self, request):
+        """处理批量文档上传"""
+        """
+        批量上传文档
+        :param request: 包含多个文件的请求
+        :return: 上传结果
+        """
+        # 打印请求信息
+        print('=== 批量上传文件请求 ===')
+        files = request.FILES.getlist('files')
+        results = []
+
+        print('上传文件数量:', len(files))
+        
+        for file in files:
+            print('文件名:', file.name)
+            try:
+                # 创建文档对象
+                doc = Document.objects.create(
+                    title=file.name,
+                    file=file,
+                    creator=request.user
+                )
+                results.append({
+                    'name': file.name,
+                    'status': 'success',
+                    'id': doc.id
+                })
+            except Exception as e:
+                results.append({
+                    'name': file.name,
+                    'status': 'error',
+                    'message': str(e)
+                })
+        
+        return Response({'results': results})
+
     @transaction.atomic
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -175,4 +213,6 @@ class DocumentVersionViewSet(CustomModelViewSet):
     serializer_class = DocumentVersionSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['document']
-    http_method_names = ['get', 'head', 'options']  # 只允许查询操作
+    http_method_names = ['get', 'head', 'options', 'post']  # 只允许查询操作
+    
+    

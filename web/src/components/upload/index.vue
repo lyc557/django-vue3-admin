@@ -132,7 +132,7 @@ const props = defineProps({
   },
   autoUpload: {
     type: Boolean,
-    default: true
+    default: false
   },
   showFileList: {
     type: Boolean,
@@ -243,8 +243,33 @@ const handleBeforeUpload = (file) => {
   if (props.beforeUpload) {
     return props.beforeUpload(file)
   }
-  
+  // 删除 alert('beforeUpload')
   return true
+}
+
+// 上传成功处理
+const handleUploadSuccess = (response, file, fileList) => {
+  // 删除 alert('handleUploadSuccess')
+  // 获取上传成功后的文件URL
+  const fileUrl = response.url || response.data?.url || ''
+  
+  if (fileUrl) {
+    // 更新当前文件的URL
+    const currentFile = fileList.value.find(item => item.uid === file.uid)
+    if (currentFile) {
+      currentFile.url = fileUrl
+    }
+    
+    // 更新modelValue
+    const successFiles = fileList.value
+      .filter(file => file.status === 'success' && file.url)
+      .map(file => file.url)
+    
+    emit('update:modelValue', successFiles)
+    emit('upload-success', { file, response })
+  }
+  
+  ElMessage.success(`文件 ${file.name} 上传成功`)
 }
 
 // 自定义上传请求
@@ -299,7 +324,9 @@ const customUploadRequest = (options) => {
   });
 
   xhr.setRequestHeader('Authorization', uploadHeaders.value.Authorization);
+  // 设置上传文件模式
   xhr.setRequestHeader('Content-Type', 'multipart/form-data');
+
   xhr.send(formData)
   
   // 返回上传取消函数
@@ -308,30 +335,6 @@ const customUploadRequest = (options) => {
       xhr.abort()
     }
   }
-}
-
-// 上传成功处理
-const handleUploadSuccess = (response, file, fileList) => {
-  // 获取上传成功后的文件URL
-  const fileUrl = response.url || response.data?.url || ''
-  
-  if (fileUrl) {
-    // 更新当前文件的URL
-    const currentFile = fileList.value.find(item => item.uid === file.uid)
-    if (currentFile) {
-      currentFile.url = fileUrl
-    }
-    
-    // 更新modelValue
-    const successFiles = fileList.value
-      .filter(file => file.status === 'success' && file.url)
-      .map(file => file.url)
-    
-    emit('update:modelValue', successFiles)
-    emit('upload-success', { file, response })
-  }
-  
-  ElMessage.success(`文件 ${file.name} 上传成功`)
 }
 
 // 上传错误处理

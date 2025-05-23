@@ -242,21 +242,18 @@
         :upload-url="'/api/kb/document/batch-upload/'"
         :multiple="true"
         :drag="true"
-        :auto-upload="true"
+        :auto-upload="false"
         :accept="'.doc,.docx,.pdf,.md,.txt'"
-        :max-size="10"
+        :max-size="100"
         :tip-text="'支持Word、PDF、Markdown和文本文件，单个文件不超过10MB'"
+        :show-file-list="false"
         :show-upload-list="true"
         @upload-success="handleBatchUploadSuccess"
         @upload-error="handleBatchUploadError"
-        @upload-progress="handleUploadProgress"
-        @file-removed="handleFileRemoved"
       />
       <template #footer>
         <el-button @click="uploadDialogVisible = false">关闭</el-button>
-        <el-button type="primary" @click="handleClearUploadList">
-          清空列表
-        </el-button>
+        <el-button type="primary" @click="submitBatchUpload">开始上传</el-button>
       </template>
     </el-dialog>
   </div>
@@ -407,8 +404,11 @@ const beforeUpload = (file) => {
   return isLt10M
 }
 
-const handleUploadSuccess = (response) => {
-  documentForm.value.attachments.push(response.url)
+const handleUploadSuccess = (response, file, fileList) => {
+  documentForm.value.attachments.push({
+    name: file.name,
+    url: response.url
+  })
   ElMessage.success('上传成功')
 }
 
@@ -492,6 +492,33 @@ const handleBatchUpload = () => {
   
   // 打开批量上传对话框，并添加分类选择
   uploadDialogVisible.value = true
+}
+
+// 在状态定义部分添加
+const uploaderRef = ref(null)
+
+// 添加以下方法
+const submitBatchUpload = () => {
+  if (!uploadForm.value.category) {
+    ElMessage.warning('请选择文档分类')
+    return
+  }
+  
+  if (uploaderRef.value) {
+    uploaderRef.value.submitUpload()
+  } else {
+    ElMessage.error('上传组件未初始化')
+  }
+}
+
+const handleBatchUploadSuccess = (data) => {
+  ElMessage.success('文档上传成功')
+  // 可以在这里处理上传成功后的逻辑，例如刷新文档列表
+  fetchDocuments()
+}
+
+const handleBatchUploadError = (error) => {
+  ElMessage.error(`上传失败: ${error.message || '未知错误'}`)
 }
 
 // 在状态定义部分添加
