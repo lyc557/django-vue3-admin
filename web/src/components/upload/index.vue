@@ -156,8 +156,23 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'upload-success', 'upload-error', 'upload-progress', 'file-removed'])
 
 const uploadRef = ref(null)
-const fileList = ref([])
-
+const fileList = ref([
+  {
+    name: 'file1.txt',
+    url: 'URL_ADDRESS.com/file1.txt',
+    status: 'success'
+  },
+  {
+    name: 'file1.txt',
+    url: 'URL_ADDRESS.com/file1.txt',
+    status: 'success'
+  },
+  {
+    name: 'file2.txt',
+    url: 'URL_ADDRESSfile2.txt',
+    status: 'error'
+  }
+])
 // 监听modelValue变化
 watch(() => props.modelValue, (newVal) => {
   // 如果外部传入的值变化，更新内部的fileList
@@ -332,6 +347,8 @@ const handleRemoveFile = (file) => {
   emit('file-removed', file)
 }
 
+
+
 // 提交上传（用于非自动上传模式）
 const submitUpload = () => {
   uploadRef.value.submit()
@@ -344,11 +361,8 @@ const clearFiles = () => {
 }
 
 const handleFileChange = (file, fileList) => {
-  console.log('handleFileChange', file, fileList);
-  console.log('props.beforeUpload', props.beforeUpload);
-  // 1. 处理 before-upload 的功能
-  if (props.beforeUpload) {
 
+  if (props.beforeUpload) {
     const beforeResult = props.beforeUpload(file);
     if (beforeResult === false) {
       // 如果返回false，阻止文件添加
@@ -366,12 +380,40 @@ const handleFileChange = (file, fileList) => {
 
   // 2. 设置文件状态为ready
   file.status = 'ready';
+
+  // 检查文件大小
+  if (file.size > props.maxSize * 1024 * 1024) {
+    ElMessage.error(`文件大小不能超过 ${props.maxSize}MB`)
+    return
+  }
+  // 检查文件类型
+  // 修改为（保留点号）
+  const fileType = '.' + file.name.split('.').pop().toLowerCase()
+  if (!props.accept.split(',').includes(fileType)) {
+    ElMessage.error(`不支持的文件类型: ${fileType}`)
+    return
+  }
+
+  if (fileList.length > props.limit) {
+    ElMessage.error(`最多只能上传 ${props.limit} 个文件`)
+    return
+  }
+  // 检查文件是否已存在
+  // if (fileList.some(item => item.name === file.name)) {
+  //   ElMessage.warning('文件已存在')
+  //   return
+  // }
+  // 检查文件是否已上传成功
+  if (fileList.some(item => item.name === file.name && item.status === 'success')) {
+    ElMessage.warning('文件已上传成功')
+    return
+  }
+  // 检查文件是否已上传失败
+  if (fileList.some(item => item.name === file.name && item.status === 'error')) {
+    ElMessage.warning('文件已上传失败')
+    return
+  }
   
-  // 3. 触发progress事件（如果需要）
-  emit('upload-progress', 0, file);
-  
-  // 4. 返回true允许文件添加
-  return true;
 };
 
 

@@ -251,10 +251,6 @@
         @upload-success="handleBatchUploadSuccess"
         @upload-error="handleBatchUploadError"
       />
-      <template #footer>
-        <el-button @click="uploadDialogVisible = false">关闭</el-button>
-        <el-button type="primary" @click="submitBatchUpload">开始上传</el-button>
-      </template>
     </el-dialog>
   </div>
 </template>
@@ -497,20 +493,6 @@ const handleBatchUpload = () => {
 
 // 在状态定义部分添加
 const uploaderRef = ref(null)
-
-// 添加以下方法
-const submitBatchUpload = () => {
-  if (!uploadForm.value.category) {
-    ElMessage.warning('请选择文档分类')
-    return
-  }
-  
-  if (uploaderRef.value) {
-    uploaderRef.value.submitUpload()
-  } else {
-    ElMessage.error('上传组件未初始化')
-  }
-}
 
 const handleBatchUploadSuccess = (data) => {
   ElMessage.success('文档上传成功')
