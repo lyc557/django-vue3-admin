@@ -17,7 +17,7 @@
 
       <div class="operation-buttons">
         <el-button type="primary" @click="handleCreate">新建文档</el-button>
-        <el-button @click="uploadDialogVisible = true">批量上传</el-button>
+        <el-button @click="handleBatchUpload">批量上传</el-button>
       </div>
     </div>
 
@@ -59,7 +59,7 @@
           <el-button link type="primary" @click="handlePreview(row)">预览</el-button>
           <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
           <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
-          <el-button link type="info" @click="showHistory(row)">历史</el-button>
+          <el-button link type="info" @click="showHistory(row)" v-if="false">历史</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -220,6 +220,23 @@
       width="60%"
       destroy-on-close
     >
+      <el-form :model="uploadForm" label-width="80px">
+        <el-form-item label="分类" required>
+          <el-select
+            v-model="uploadForm.category"
+            placeholder="请选择分类"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in categories"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      
       <fileUploader
         v-model="uploadedFiles"
         :upload-url="'/api/documents/batch-upload'"
@@ -464,6 +481,23 @@ const loadData = async () => {
     ElMessage.error('获取基础数据失败')
   }
 }
+
+// 在方法定义部分添加
+const handleBatchUpload = () => {
+  // 检查是否有可用的分类
+  if (!categories.value || categories.value.length === 0) {
+    ElMessage.warning('请等待分类数据加载完成')
+    return
+  }
+  
+  // 打开批量上传对话框，并添加分类选择
+  uploadDialogVisible.value = true
+}
+
+// 在状态定义部分添加
+const uploadForm = ref({
+  category: ''
+})
 
 onMounted(() => {
   loadData()
