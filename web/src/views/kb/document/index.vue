@@ -1,7 +1,7 @@
 <template>
   <div class="document-container">
     <!-- 搜索和操作栏 -->
-    <div class="search-bar">
+    <div class="toolbar">
       <el-input
         v-model="searchQuery"
         placeholder="搜索文档标题/内容/标签"
@@ -14,50 +14,52 @@
           </el-button>
         </template>
       </el-input>
-    </div>
 
-    <div class="operation-bar">
-      <el-button type="primary" @click="handleCreate">
-        新建文档
-      </el-button>
-      <el-button @click="uploadDialogVisible = true">
-        批量上传
-      </el-button>
+      <div class="operation-buttons">
+        <el-button type="primary" @click="handleCreate">新建文档</el-button>
+        <el-button @click="uploadDialogVisible = true">批量上传</el-button>
+      </div>
     </div>
 
     <!-- 文档列表 -->
-    <el-table :data="documents" v-loading="loading">
-      <el-table-column prop="title" label="标题" min-width="200" />
-      <el-table-column prop="category_name" label="分类" width="120" />
-      <el-table-column prop="tags" label="标签" width="150">
+    <el-table 
+      :data="documents" 
+      v-loading="loading"
+      border
+      stripe
+      highlight-current-row
+    >
+      <el-table-column type="index" label="序号" width="60"/>
+      <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
+      <el-table-column prop="category_name" label="分类" width="120" align="center" />
+      <el-table-column prop="tags" label="标签" width="150" align="center">
         <template #default="{ row }">
-          <el-tag v-for="tag in row.tags" :key="tag" size="small" class="mx-1">
+          <el-tag 
+            v-for="tag in row.tags" 
+            :key="tag" 
+            size="small" 
+            class="mx-1"
+            effect="plain"
+          >
             {{ tag }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="状态" width="100">
+      <el-table-column prop="status" label="状态" width="100" align="center">
         <template #default="{ row }">
-          <el-tag :type="row.status === '0' ? 'success' : 'info'">
+          <el-tag :type="row.status === '0' ? 'warning' : 'success'" effect="plain">
             {{ row.status === '0' ? '草稿' : '已发布' }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="creator_name" label="创建人" width="120" />
-      <el-table-column prop="create_datetime" label="创建时间" width="180" />
-      <el-table-column label="操作" width="200" fixed="right">
+      <el-table-column prop="creator_name" label="创建人" width="120" align="center" />
+      <el-table-column prop="create_datetime" label="创建时间" width="180" align="center" />
+      <el-table-column label="操作" width="220" fixed="right" align="center">
         <template #default="{ row }">
-          <el-button link @click="handlePreview(row)">预览</el-button>
-          <el-button 
-            link 
-            @click="handleEdit(row)"
-          >编辑</el-button>
-          <el-button 
-            link 
-            type="danger" 
-            @click="handleDelete(row)"
-          >删除</el-button>
-          <el-button link @click="showHistory(row)">历史</el-button>
+          <el-button link type="primary" @click="handlePreview(row)">预览</el-button>
+          <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
+          <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+          <el-button link type="info" @click="showHistory(row)">历史</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -67,9 +69,9 @@
       <el-pagination
         v-model:current-page="pagination.currentPage"
         v-model:page-size="pagination.pageSize"
-        :page-sizes="[10, 20, 30, 40]"
-        layout="total, sizes, prev, pager, next, jumper"
+        :page-sizes="[10, 20, 50, 100]"
         :total="total"
+        layout="total, sizes, prev, pager, next, jumper"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
@@ -80,13 +82,23 @@
       v-model="dialogVisible"
       :title="dialogType === 'create' ? '新建文档' : '编辑文档'"
       width="80%"
+      destroy-on-close
     >
-      <el-form :model="documentForm" label-width="80px">
-        <el-form-item label="标题" required>
-          <el-input v-model="documentForm.title" />
+      <el-form 
+        :model="documentForm" 
+        label-width="80px"
+        :rules="formRules"
+        ref="documentFormRef"
+      >
+        <el-form-item label="标题" prop="title">
+          <el-input v-model.trim="documentForm.title" placeholder="请输入文档标题" />
         </el-form-item>
-        <el-form-item label="分类" required>
-          <el-select v-model="documentForm.category">
+        <el-form-item label="分类" prop="category">
+          <el-select 
+            v-model="documentForm.category"
+            placeholder="请选择分类"
+            clearable
+          >
             <el-option
               v-for="item in categories"
               :key="item.value"
@@ -95,7 +107,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="标签">
+        <el-form-item label="标签" prop="tags">
           <el-select
             v-model="documentForm.tags"
             multiple
@@ -103,6 +115,7 @@
             allow-create
             default-first-option
             placeholder="请选择标签"
+            clearable
           >
             <el-option
               v-for="item in tags"
@@ -112,17 +125,31 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="内容" required>
-          <MdEditor v-model="documentForm.content" />
+        <el-form-item label="内容" prop="content">
+          <MdEditor 
+            v-model="documentForm.content"
+            height="400px"
+          />
         </el-form-item>
         <el-form-item label="附件">
           <el-upload
             action="/api/upload"
             :on-success="handleUploadSuccess"
             :on-error="handleUploadError"
+            :before-upload="beforeUpload"
             multiple
+            :limit="5"
+            :file-list="documentForm.attachments"
           >
-            <el-button type="primary">上传附件</el-button>
+            <el-button type="primary">
+              <el-icon><UploadFilled /></el-icon>
+              上传附件
+            </el-button>
+            <template #tip>
+              <div class="el-upload__tip">
+                支持任意格式文件，单个文件不超过10MB
+              </div>
+            </template>
           </el-upload>
         </el-form-item>
         <el-form-item label="状态">
@@ -134,20 +161,26 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="() => handleSave(documentForm)">保存</el-button>
+        <el-button type="primary" @click="submitForm">保存</el-button>
       </template>
     </el-dialog>
+
     <!-- 预览对话框 -->
     <el-dialog
       v-model="previewVisible"
       title="文档预览"
       width="80%"
+      destroy-on-close
     >
       <div class="preview-content">
         <h2>{{ previewData.title }}</h2>
         <div class="meta-info">
-          <span>作者: {{ previewData.creator }}</span>
-          <span>创建时间: {{ previewData.create_datetime }}</span>
+          <el-tag size="small" effect="plain">
+            作者: {{ previewData.creator }}
+          </el-tag>
+          <el-tag size="small" effect="plain">
+            创建时间: {{ previewData.create_datetime }}
+          </el-tag>
         </div>
         <MdPreview :modelValue="previewData.content" />
       </div>
@@ -158,18 +191,24 @@
       v-model="historyVisible"
       title="历史版本"
       width="60%"
+      destroy-on-close
     >
       <el-timeline>
         <el-timeline-item
           v-for="(history, index) in documentHistory"
           :key="index"
           :timestamp="history.updateTime"
+          :type="index === 0 ? 'primary' : ''"
         >
           <p>修改人: {{ history.editor }}</p>
-          <el-button link @click="previewVersion(history)">查看此版本</el-button>
-          <el-button link type="primary" @click="restoreVersion(history)">
-            恢复此版本
-          </el-button>
+          <div class="history-actions">
+            <el-button link type="primary" @click="previewVersion(history)">
+              查看此版本
+            </el-button>
+            <el-button link type="success" @click="restoreVersion(history)">
+              恢复此版本
+            </el-button>
+          </div>
         </el-timeline-item>
       </el-timeline>
     </el-dialog>
@@ -179,6 +218,7 @@
       v-model="uploadDialogVisible"
       title="批量上传文档"
       width="60%"
+      destroy-on-close
     >
       <fileUploader
         v-model="uploadedFiles"
@@ -188,31 +228,46 @@
         :auto-upload="true"
         :accept="'.doc,.docx,.pdf,.md,.txt'"
         :max-size="10"
-        :tip-text="'支持Word、PDF、Markdown和文本文件，单个文件不超过100MB'"
+        :tip-text="'支持Word、PDF、Markdown和文本文件，单个文件不超过10MB'"
         :show-upload-list="true"
         @upload-success="handleBatchUploadSuccess"
         @upload-error="handleBatchUploadError"
         @upload-progress="handleUploadProgress"
         @file-removed="handleFileRemoved"
       />
-      
       <template #footer>
         <el-button @click="uploadDialogVisible = false">关闭</el-button>
-        <el-button type="primary" @click="handleClearUploadList">清空列表</el-button>
+        <el-button type="primary" @click="handleClearUploadList">
+          清空列表
+        </el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup name="document">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, UploadFilled } from '@element-plus/icons-vue'
 import { MdEditor, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import fileUploader from '/@/components/upload/index.vue'
-import { GetList,  AddObj, UpdateObj, GetCategoryList, GetTagList, DelObj} from './api'
-import { APIResponseData } from '/@/api/interface'
+import { GetList, AddObj, UpdateObj, GetCategoryList, GetTagList, DelObj } from './api'
+import type { APIResponseData } from '/@/api/interface'
+
+// 表单校验规则
+const formRules = {
+  title: [
+    { required: true, message: '请输入文档标题', trigger: 'blur' },
+    { min: 2, max: 100, message: '标题长度在2-100个字符之间', trigger: 'blur' }
+  ],
+  category: [
+    { required: true, message: '请选择文档分类', trigger: 'change' }
+  ],
+  content: [
+    { required: true, message: '请输入文档内容', trigger: 'blur' }
+  ]
+}
 
 // 状态定义
 const loading = ref(false)
@@ -230,9 +285,9 @@ const historyVisible = ref(false)
 const documentHistory = ref([])
 const categories = ref([])
 const tags = ref([])
-let tagData  = ref([])
+const tagData = ref([])
 const uploadDialogVisible = ref(false)
-
+const documentFormRef = ref(null)
 
 // 表单数据
 const documentForm = ref({
@@ -252,11 +307,9 @@ const previewData = ref({
   create_datetime: ''
 })
 
-
-
 // 方法定义
 const handleSearch = async () => {
-  pagination.currentPage = 1
+  pagination.value.currentPage = 1
   await fetchDocuments()
 }
 
@@ -281,20 +334,17 @@ const handleEdit = (row) => {
 
 const handleDelete = async (row) => {
   try {
-    await ElMessageBox.confirm('确认删除该文档?', '提示')
-        // 调用删除文档API
-    const documentId = row.id;
-    try {
-      const res: APIResponseData = await DelObj(documentId);
-      if (res?.code === 2000) {
-        ElMessage.success('删除成功');
-      }
-    } catch (error) {
-      ElMessage.error('删除失败');
+    await ElMessageBox.confirm('确认删除该文档?', '提示', {
+      type: 'warning'
+    })
+    const res = await DelObj(row.id)
+    if (res?.code === 2000) {
+      ElMessage.success('删除成功')
+      await fetchDocuments()
     }
-    await fetchDocuments()
   } catch (error) {
-    console.error(error)
+    console.error('删除文档失败:', error)
+    ElMessage.error('删除失败')
   }
 }
 
@@ -303,55 +353,41 @@ const handlePreview = (row) => {
   previewVisible.value = true
 }
 
-// 保存文档方法
-/**
- * 调用文档新增API，保存文档数据
- * @param {object} formData - 表单数据对象
- */
-const handleSave = async (formData) => {
-  try {
-    const tagIds = formData.tags.map(tagName => {
-      const tagItem = tagData.value.find(item => item.name === tagName);
-      return tagItem ? tagItem.id : null;
-    }).filter(id => id !== null); // 过滤掉未找到对应id的标签
-    // 更新表单数据
-    formData.tags = tagIds;
-    // 打印表单数据,用于调试
-    console.log('表单数据:', formData);
-    // ... existing code ...
-    const res = formData.id ? await UpdateObj(formData) : await AddObj(formData);
+const submitForm = async () => {
+  if (!documentFormRef.value) return
+  
+  await documentFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        const formData = { ...documentForm.value }
+        formData.tags = formData.tags.map(tagName => {
+          const tagItem = tagData.value.find(item => item.name === tagName)
+          return tagItem ? tagItem.id : null
+        }).filter(Boolean)
 
-    // 根据实际业务处理保存成功后的逻辑
-    ElMessage.success('保存成功')
-    // 可选：刷新列表或关闭弹窗等
-    dialogVisible.value = false;
-    await fetchDocuments();
+        const res = formData.id ? 
+          await UpdateObj(formData) : 
+          await AddObj(formData)
 
-  } catch (error) {
-    // 错误处理
-    ElMessage.error('保存失败，请重试');
-  }
-};
-
-const showHistory = async (row) => {
-  // TODO: 获取历史版本数据
-  historyVisible.value = true
+        if (res?.code === 2000) {
+          ElMessage.success('保存成功')
+          dialogVisible.value = false
+          await fetchDocuments()
+        }
+      } catch (error) {
+        console.error('保存文档失败:', error)
+        ElMessage.error('保存失败，请重试')
+      }
+    }
+  })
 }
 
-const previewVersion = (version) => {
-  previewData.value = { ...version }
-  previewVisible.value = true
-}
-
-const restoreVersion = async (version) => {
-  try {
-    // TODO: 调用恢复版本API
-    ElMessage.success('版本恢复成功')
-    historyVisible.value = false
-    await fetchDocuments()
-  } catch (error) {
-    console.error(error)
+const beforeUpload = (file) => {
+  const isLt10M = file.size / 1024 / 1024 < 10
+  if (!isLt10M) {
+    ElMessage.error('上传文件大小不能超过 10MB!')
   }
+  return isLt10M
 }
 
 const handleUploadSuccess = (response) => {
@@ -360,16 +396,16 @@ const handleUploadSuccess = (response) => {
 }
 
 const handleUploadError = () => {
-  ElMessage.error('上传失败')
+  ElMessage.error('上传失败，请重试')
 }
 
 const handleSizeChange = async (val) => {
-  pagination.pageSize = val
+  pagination.value.pageSize = val
   await fetchDocuments()
 }
 
 const handleCurrentChange = async (val) => {
-  pagination.currentPage = val
+  pagination.value.currentPage = val
   await fetchDocuments()
 }
 
@@ -378,26 +414,28 @@ const fetchDocuments = async () => {
   loading.value = true
   try {
     const params = {
-      page: pagination.currentPage,
-      pageSize: pagination.pageSize,
+      page: pagination.value.currentPage,
+      pageSize: pagination.value.pageSize,
       search: searchQuery.value
     }
-    let res: APIResponseData = await GetList(params);
-
-    documents.value = res.data
-    total.value = res.data.total
-    // category 
-    documents.value.map(item => {
-      item.category_name = categories.value.find(c => c.value === item.category)?.label || ''
-      item.tags = item.tags.map(tagId => {
-        const tagItem = tagData.value.find(item => item.id === tagId);
-        return tagItem ? tagItem.name : '';
-      })
-      item.status = item.status == 0 ? '0' : '1'
-    })
-    loading.value = false
+    const res = await GetList(params)
+    
+    if (res?.code === 2000) {
+      documents.value = res.data.map(item => ({
+        ...item,
+        category_name: categories.value.find(c => c.value === item.category)?.label || '',
+        tags: item.tags.map(tagId => {
+          const tagItem = tagData.value.find(t => t.id === tagId)
+          return tagItem ? tagItem.name : ''
+        }),
+        status: item.status == 0 ? '0' : '1'
+      }))
+      total.value = res.total
+    }
   } catch (error) {
-    console.error(error)
+    console.error('获取文档列表失败:', error)
+    ElMessage.error('获取文档列表失败')
+  } finally {
     loading.value = false
   }
 }
@@ -405,30 +443,32 @@ const fetchDocuments = async () => {
 // 获取分类和标签数据
 const loadData = async () => {
   try {
-    // 获取分类数据
-    const categoryRes = await GetCategoryList()
-    categories.value = categoryRes.data.map(item => ({
-      value: item.id,
-      label: item.name
-    }))
-    
-    // 获取标签数据
-    const tagRes = await GetTagList()
-    tagData.value = tagRes.data
-    tags.value = tagRes.data.map(item => item.name)
+    const [categoryRes, tagRes] = await Promise.all([
+      GetCategoryList(),
+      GetTagList()
+    ])
 
+    if (categoryRes?.code === 2000) {
+      categories.value = categoryRes.data.map(item => ({
+        value: item.id,
+        label: item.name
+      }))
+    }
+
+    if (tagRes?.code === 2000) {
+      tagData.value = tagRes.data
+      tags.value = tagRes.data.map(item => item.name)
+    }
   } catch (error) {
-    console.error('获取分类或标签数据失败:', error)
+    console.error('获取基础数据失败:', error)
+    ElMessage.error('获取基础数据失败')
   }
 }
 
-// 在组件挂载时调用
 onMounted(() => {
-  // 初始化数据
   loadData()
   fetchDocuments()
 })
-
 </script>
 
 <style scoped>
@@ -436,20 +476,20 @@ onMounted(() => {
   padding: 20px;
 }
 
-.search-bar {
+.toolbar {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
-  gap: 10px;
-}
-
-.operation-bar {
-  display: flex;
-  margin-bottom: 20px;
-  gap: 10px;
 }
 
 .search-input {
   width: 300px;
+}
+
+.operation-buttons {
+  display: flex;
+  gap: 10px;
 }
 
 .pagination {
@@ -463,21 +503,26 @@ onMounted(() => {
 }
 
 .meta-info {
-  color: #666;
   margin: 10px 0;
   display: flex;
-  gap: 20px;
+  gap: 10px;
 }
 
-.upload-demo {
-  margin-bottom: 20px;
+.history-actions {
+  margin-top: 8px;
 }
 
-.upload-status {
-  margin-top: 20px;
+:deep(.el-table) {
+  margin-top: 16px;
 }
 
-.error-message {
-  color: #F56C6C;
+:deep(.el-form-item) {
+  margin-bottom: 22px;
+}
+
+:deep(.el-upload__tip) {
+  line-height: 1.2;
+  margin-top: 8px;
+  color: #909399;
 }
 </style>
