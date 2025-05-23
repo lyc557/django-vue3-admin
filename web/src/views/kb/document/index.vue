@@ -228,7 +228,7 @@ const historyVisible = ref(false)
 const documentHistory = ref([])
 const categories = ref([])
 const tags = ref([])
-
+let tagData  = ref([])
 
 // 表单数据
 const documentForm = ref({
@@ -259,10 +259,10 @@ const handleSearch = async () => {
 const handleCreate = () => {
   dialogType.value = 'create'
   documentForm.value = {
-    title: 'aaaaaa',
+    title: '',
     category: '',
-    tags: ['Vue', 'JavaScript'],
-    content: '1234444',
+    tags: [],
+    content: '',
     status: '0',
     attachments: []
   }
@@ -300,11 +300,24 @@ const handleSave = async (formData) => {
   // 确保formData已正确传递
   console.log('表单数据:', formData);
   try {
+
+    console.log("formData.tags",formData.tags)
+
+    // 将标签名称转换为对应的tag_id
+    const tagIds = formData.tags.map(tagName => {
+      const tagItem = tagData.value.find(item => item.name === tagName);
+      return tagItem ? tagItem.id : null;
+    }).filter(id => id !== null); // 过滤掉未找到对应id的标签
+    // 更新表单数据
+    formData.tags = tagIds;
+
     const res = await AddObj(formData);
     // 根据实际业务处理保存成功后的逻辑
-    ElMessage.success('保存成功');
+    ElMessage.success('保存成功')
     // 可选：刷新列表或关闭弹窗等
-    // emit('success', res);
+    dialogVisible.value = false;
+    await fetchDocuments();
+
   } catch (error) {
     // 错误处理
     ElMessage.error('保存失败，请重试');
@@ -397,6 +410,7 @@ const loadData = async () => {
     
     // 获取标签数据
     const tagRes = await GetTagList()
+    tagData.value = tagRes.data
     tags.value = tagRes.data.map(item => item.name)
 
   } catch (error) {
