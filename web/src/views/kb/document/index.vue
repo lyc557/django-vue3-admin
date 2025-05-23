@@ -259,8 +259,8 @@ const handleSearch = async () => {
 const handleCreate = () => {
   dialogType.value = 'create'
   documentForm.value = {
-    title: '123',
-    category: '124',
+    title: 'aaaaaa',
+    category: '',
     tags: ['Vue', 'JavaScript'],
     content: '1234444',
     status: '0',
@@ -397,10 +397,7 @@ const loadData = async () => {
     
     // 获取标签数据
     const tagRes = await GetTagList()
-    tags.value = tagRes.data.map(item => ({
-      value: item.id,
-      label: item.name
-    }))
+    tags.value = tagRes.data.map(item => item.name)
 
   } catch (error) {
     console.error('获取分类或标签数据失败:', error)
