@@ -24,6 +24,7 @@ const websocket: socket = {
     // 重连频率
     reconnect_interval: 5 * 1000,
     init: (receiveMessage: Function | null) => {
+        return null
         if (!('WebSocket' in window)) {
             message.warning('浏览器不支持WebSocket')
             return null

@@ -11,13 +11,10 @@
       :drag="drag"
       :auto-upload="autoUpload"
       :show-file-list="showFileList"
-      :before-upload="handleBeforeUpload"
-      :on-success="handleUploadSuccess"
-      :on-error="handleUploadError"
-      :on-progress="handleUploadProgress"
       :on-exceed="handleExceed"
       :file-list="fileList"
       :http-request="customUploadRequest"
+      :on-change="handleFileChange"
     >
       <template #default>
         <slot>
@@ -93,7 +90,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
@@ -230,123 +227,92 @@ const getStatusText = (status) => {
   }
 }
 
-// 上传前检查
-const handleBeforeUpload = (file) => {
-  // 检查文件大小
-  const isLtMaxSize = file.size / 1024 / 1024 < props.maxSize
-  if (!isLtMaxSize) {
-    ElMessage.error(`文件大小不能超过 ${props.maxSize}MB!`)
-    return false
-  }
-  
-  // 如果有自定义的beforeUpload函数，则调用
-  if (props.beforeUpload) {
-    return props.beforeUpload(file)
-  }
-  // 删除 alert('beforeUpload')
-  return true
-}
-
-// 上传成功处理
-const handleUploadSuccess = (response, file, fileList) => {
-  // 删除 alert('handleUploadSuccess')
-  // 获取上传成功后的文件URL
-  const fileUrl = response.url || response.data?.url || ''
-  
-  if (fileUrl) {
-    // 更新当前文件的URL
-    const currentFile = fileList.value.find(item => item.uid === file.uid)
-    if (currentFile) {
-      currentFile.url = fileUrl
-    }
-    
-    // 更新modelValue
-    const successFiles = fileList.value
-      .filter(file => file.status === 'success' && file.url)
-      .map(file => file.url)
-    
-    emit('update:modelValue', successFiles)
-    emit('upload-success', { file, response })
-  }
-  
-  ElMessage.success(`文件 ${file.name} 上传成功`)
-}
-
 // 自定义上传请求
 const customUploadRequest = (options) => {
-  const { file, onProgress, onSuccess, onError } = options
-  
-  // 创建FormData对象
-  const formData = new FormData()
-  formData.append('file', file)
-  
-  // 创建XMLHttpRequest对象
-  const xhr = new XMLHttpRequest()
-  
-  // 监听上传进度
+  console.log('customUploadRequest', options);
+  const { file, onProgress, onSuccess, onError } = options;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const xhr = new XMLHttpRequest();
+
   xhr.upload.addEventListener('progress', (e) => {
     if (e.lengthComputable) {
-      const percentage = Math.round((e.loaded * 100) / e.total)
-      onProgress({ percent: percentage })
+      const percentage = Math.round((e.loaded * 100) / e.total);
+      onProgress({ percent: percentage });
+      file.status = 'uploading';
+      file.percentage = percentage;
+      emit('upload-progress', percentage, file);
     }
-  })
-  
-  // 请求完成
+  });
+
   xhr.addEventListener('load', () => {
     if (xhr.status >= 200 && xhr.status < 300) {
+      let response;
       try {
-        const response = JSON.parse(xhr.responseText)
-        onSuccess(response)
+        response = JSON.parse(xhr.responseText);
       } catch (e) {
-        onSuccess({ url: xhr.responseText })
+        response = { url: xhr.responseText };
       }
+
+      file.status = 'success';
+      file.url = response.url || '';
+      file.response = response;
+      onSuccess(response);
+      emit('upload-success', response, file);
+
+      // 更新绑定的 v-model
+      const successFiles = fileList.value
+        .filter(f => f.status === 'success' && f.url)
+        .map(f => f.url);
+      emit('update:modelValue', successFiles);
+
     } else {
-      onError({ status: xhr.status, message: xhr.statusText })
+      const err = { status: xhr.status, message: xhr.statusText };
+      file.status = 'error';
+      file.response = err;
+      onError(err);
+      emit('upload-error', err, file);
     }
-  })
-  
-  // 请求错误
+  });
+
   xhr.addEventListener('error', () => {
-    onError({ status: xhr.status, message: '上传失败' })
-  })
-  
-  // 请求超时
+    const err = { status: xhr.status, message: '上传失败' };
+    file.status = 'error';
+    file.response = err;
+    onError(err);
+    emit('upload-error', err, file);
+  });
+
   xhr.addEventListener('timeout', () => {
-    onError({ message: '上传超时' })
-  })
+    const err = { message: '上传超时' };
+    file.status = 'error';
+    file.response = err;
+    onError(err);
+    emit('upload-error', err, file);
+  });
 
+  xhr.open('POST', getBaseURL(props.uploadUrl), true);
 
-  // 发送请求
-  xhr.open('POST', getBaseURL(props.uploadUrl), true)
-  // 添加认证头
   let uploadHeaders = ref({
     Authorization: 'JWT ' + Session.get('token'),
   });
-
   xhr.setRequestHeader('Authorization', uploadHeaders.value.Authorization);
-  // 设置上传文件模式
-  xhr.setRequestHeader('Content-Type', 'multipart/form-data');
 
-  xhr.send(formData)
-  
-  // 返回上传取消函数
+  // 不需要设置 Content-Type 为 multipart/form-data
+  // 浏览器在 FormData 会自动设置合适的 Content-Type 和边界
+  // xhr.setRequestHeader('Content-Type', 'multipart/form-data'); // ← 请移除这行
+
+  xhr.send(formData);
+
   return {
     abort: () => {
-      xhr.abort()
+      xhr.abort();
     }
-  }
+  };
 }
 
-// 上传错误处理
-const handleUploadError = (error, file, fileList) => {
-  ElMessage.error(`文件 ${file.name} 上传失败: ${error.message || '未知错误'}`)
-  emit('upload-error', { file, error })
-}
-
-// 上传进度处理
-const handleUploadProgress = (event, file, fileList) => {
-  emit('upload-progress', { file, event })
-}
 
 // 超出限制处理
 const handleExceed = (files, fileList) => {
@@ -377,12 +343,45 @@ const clearFiles = () => {
   emit('update:modelValue', [])
 }
 
+const handleFileChange = (file, fileList) => {
+  console.log('handleFileChange', file, fileList);
+  console.log('props.beforeUpload', props.beforeUpload);
+  // 1. 处理 before-upload 的功能
+  if (props.beforeUpload) {
+
+    const beforeResult = props.beforeUpload(file);
+    if (beforeResult === false) {
+      // 如果返回false，阻止文件添加
+      return false;
+    }
+    if (beforeResult instanceof Promise) {
+      beforeResult.then(res => {
+        if (res === false) {
+          // 异步返回false，从列表中移除文件
+          fileList.splice(fileList.indexOf(file), 1);
+        }
+      });
+    }
+  }
+
+  // 2. 设置文件状态为ready
+  file.status = 'ready';
+  
+  // 3. 触发progress事件（如果需要）
+  emit('upload-progress', 0, file);
+  
+  // 4. 返回true允许文件添加
+  return true;
+};
+
+
 // 暴露方法给父组件
 defineExpose({
   submitUpload,
   clearFiles,
   uploadRef
 })
+
 </script>
 
 <style scoped>
