@@ -28,7 +28,7 @@
     <!-- 文档列表 -->
     <el-table :data="documents" v-loading="loading">
       <el-table-column prop="title" label="标题" min-width="200" />
-      <el-table-column prop="category" label="分类" width="120" />
+      <el-table-column prop="category_name" label="分类" width="120" />
       <el-table-column prop="tags" label="标签" width="150">
         <template #default="{ row }">
           <el-tag v-for="tag in row.tags" :key="tag" size="small" class="mx-1">
@@ -38,13 +38,13 @@
       </el-table-column>
       <el-table-column prop="status" label="状态" width="100">
         <template #default="{ row }">
-          <el-tag :type="row.status === 'published' ? 'success' : 'info'">
-            {{ row.status === 'published' ? '已发布' : '草稿' }}
+          <el-tag :type="row.status === '0' ? 'success' : 'info'">
+            {{ row.status === '0' ? '草稿' : '已发布' }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="creator" label="创建人" width="120" />
-      <el-table-column prop="createTime" label="创建时间" width="180" />
+      <el-table-column prop="creator_name" label="创建人" width="120" />
+      <el-table-column prop="create_datetime" label="创建时间" width="180" />
       <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
           <el-button link @click="handlePreview(row)">预览</el-button>
@@ -65,11 +65,11 @@
     <!-- 分页 -->
     <div class="pagination">
       <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
+        v-model:current-page="pagination.currentPage"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 30, 40]"
+        layout="total, sizes, prev, pager, next, jumper"
         :total="total"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
@@ -147,7 +147,7 @@
         <h2>{{ previewData.title }}</h2>
         <div class="meta-info">
           <span>作者: {{ previewData.creator }}</span>
-          <span>创建时间: {{ previewData.createTime }}</span>
+          <span>创建时间: {{ previewData.create_datetime }}</span>
         </div>
         <MdPreview :modelValue="previewData.content" />
       </div>
@@ -211,14 +211,16 @@ import { Search, UploadFilled } from '@element-plus/icons-vue'
 import { MdEditor, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import fileUploader from '/@/components/upload/index.vue'
-import { GetList,  AddObj, GetCategoryList, GetTagList} from './api'
+import { GetList,  AddObj, UpdateObj, GetCategoryList, GetTagList, DelObj} from './api'
 import { APIResponseData } from '/@/api/interface'
 
 // 状态定义
 const loading = ref(false)
 const documents = ref([])
-const currentPage = ref(1)
-const pageSize = ref(10)
+const pagination = ref({
+  currentPage: 1,
+  pageSize: 10
+})
 const total = ref(0)
 const searchQuery = ref('')
 const dialogVisible = ref(false)
@@ -229,6 +231,8 @@ const documentHistory = ref([])
 const categories = ref([])
 const tags = ref([])
 let tagData  = ref([])
+const uploadDialogVisible = ref(false)
+
 
 // 表单数据
 const documentForm = ref({
@@ -245,14 +249,14 @@ const previewData = ref({
   title: '',
   content: '',
   creator: '',
-  createTime: ''
+  create_datetime: ''
 })
 
 
 
 // 方法定义
 const handleSearch = async () => {
-  currentPage.value = 1
+  pagination.currentPage = 1
   await fetchDocuments()
 }
 
@@ -278,8 +282,16 @@ const handleEdit = (row) => {
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm('确认删除该文档?', '提示')
-    // TODO: 调用删除API
-    ElMessage.success('删除成功')
+        // 调用删除文档API
+    const documentId = row.id;
+    try {
+      const res: APIResponseData = await DelObj(documentId);
+      if (res?.code === 2000) {
+        ElMessage.success('删除成功');
+      }
+    } catch (error) {
+      ElMessage.error('删除失败');
+    }
     await fetchDocuments()
   } catch (error) {
     console.error(error)
@@ -297,21 +309,18 @@ const handlePreview = (row) => {
  * @param {object} formData - 表单数据对象
  */
 const handleSave = async (formData) => {
-  // 确保formData已正确传递
-  console.log('表单数据:', formData);
   try {
-
-    console.log("formData.tags",formData.tags)
-
-    // 将标签名称转换为对应的tag_id
     const tagIds = formData.tags.map(tagName => {
       const tagItem = tagData.value.find(item => item.name === tagName);
       return tagItem ? tagItem.id : null;
     }).filter(id => id !== null); // 过滤掉未找到对应id的标签
     // 更新表单数据
     formData.tags = tagIds;
+    // 打印表单数据,用于调试
+    console.log('表单数据:', formData);
+    // ... existing code ...
+    const res = formData.id ? await UpdateObj(formData) : await AddObj(formData);
 
-    const res = await AddObj(formData);
     // 根据实际业务处理保存成功后的逻辑
     ElMessage.success('保存成功')
     // 可选：刷新列表或关闭弹窗等
@@ -355,12 +364,12 @@ const handleUploadError = () => {
 }
 
 const handleSizeChange = async (val) => {
-  pageSize.value = val
+  pagination.pageSize = val
   await fetchDocuments()
 }
 
 const handleCurrentChange = async (val) => {
-  currentPage.value = val
+  pagination.currentPage = val
   await fetchDocuments()
 }
 
@@ -369,28 +378,23 @@ const fetchDocuments = async () => {
   loading.value = true
   try {
     const params = {
-      page: currentPage.value,
-      pageSize: pageSize.value,
+      page: pagination.currentPage,
+      pageSize: pagination.pageSize,
       search: searchQuery.value
     }
     let res: APIResponseData = await GetList(params);
 
-    documents.value = data.items
-    total.value = data.total
-    // 模拟数据
-    // documents.value = [
-    //   {
-    //     id: 1,
-    //     title: '示例文档',
-    //     category: '技术文档',
-    //     tags: ['Vue', 'JavaScript'],
-    //     status: 'published',
-    //     creator: 'admin',
-    //     createTime: '2023-01-01 12:00:00',
-    //     content: '# 示例文档\n这是一个示例文档内容'
-    //   }
-    // ]
-    // total.value = 1
+    documents.value = res.data
+    total.value = res.data.total
+    // category 
+    documents.value.map(item => {
+      item.category_name = categories.value.find(c => c.value === item.category)?.label || ''
+      item.tags = item.tags.map(tagId => {
+        const tagItem = tagData.value.find(item => item.id === tagId);
+        return tagItem ? tagItem.name : '';
+      })
+      item.status = item.status == 0 ? '0' : '1'
+    })
     loading.value = false
   } catch (error) {
     console.error(error)
@@ -420,7 +424,9 @@ const loadData = async () => {
 
 // 在组件挂载时调用
 onMounted(() => {
+  // 初始化数据
   loadData()
+  fetchDocuments()
 })
 
 </script>
