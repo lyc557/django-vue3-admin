@@ -239,7 +239,7 @@
       
       <fileUploader
         v-model="uploadedFiles"
-        :upload-url="'/api/documents/batch-upload'"
+        :upload-url="'/api/kb/document/batch-upload/'"
         :multiple="true"
         :drag="true"
         :auto-upload="true"

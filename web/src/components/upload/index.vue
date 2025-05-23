@@ -97,7 +97,10 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
+import { getBaseURL } from '/@/utils/baseUrl';
+import { Session } from '/@/utils/storage';
 
+// 在props中添加apiBaseUrl
 const props = defineProps({
   modelValue: {
     type: Array,
@@ -286,9 +289,17 @@ const customUploadRequest = (options) => {
   xhr.addEventListener('timeout', () => {
     onError({ message: '上传超时' })
   })
-  
+
+
   // 发送请求
-  xhr.open('POST', props.uploadUrl, true)
+  xhr.open('POST', getBaseURL(props.uploadUrl), true)
+  // 添加认证头
+  let uploadHeaders = ref({
+    Authorization: 'JWT ' + Session.get('token'),
+  });
+
+  xhr.setRequestHeader('Authorization', uploadHeaders.value.Authorization);
+  xhr.setRequestHeader('Content-Type', 'multipart/form-data');
   xhr.send(formData)
   
   // 返回上传取消函数
