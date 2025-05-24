@@ -206,7 +206,8 @@
         
         <el-form-item label="附件">
           <el-upload
-            :action="getBaseURL() + 'api/upload/'" 
+            :action="getBaseURL() + apiPrefix +'upload/'"
+            :headers="uploadHeaders"
             :on-success="handleUploadSuccess"
             :on-error="handleUploadError"
             :before-upload="beforeUpload"
@@ -371,8 +372,9 @@ import {
 import { MdEditor, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import fileUploader from '/@/components/upload/index.vue'
-import { GetList, AddObj, UpdateObj, GetCategoryList, GetTagList, DelObj } from './api'
+import { apiPrefix, GetList, AddObj, UpdateObj, GetCategoryList, GetTagList, DelObj } from './api'
 import { getBaseURL } from '/@/utils/baseUrl';
+import { Session } from '/@/utils/storage'
 
 
 // 表单校验规则
@@ -777,6 +779,11 @@ const restoreVersion = (history) => {
   ElMessage.success(`已恢复到版本: ${history.updateTime}`)
   historyVisible.value = false
 }
+
+const uploadHeaders = {
+  Authorization: Session.get('token') ? 'JWT ' + Session.get('token') : ''
+}
+
 
 onMounted(() => {
   loadData()
