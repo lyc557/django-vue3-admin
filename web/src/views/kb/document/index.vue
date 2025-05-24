@@ -547,20 +547,21 @@ const submitForm = async () => {
         }).filter(Boolean)
 
         // 根据是否有ID判断是新增还是更新
-        const res = formData.id ? 
-          await UpdateObj(formData) : 
-          await AddObj(formData)
+        const res = formData.id ? await UpdateObj(formData) : await AddObj(formData)
+        /**
+         * 
+         */
         console.log('res', res)
         if (res?.code === 2000) { 
           // 新增成功，获取文档ID
           const docId = res.data.id 
-
+          let upload_attachmentIds = []
           // 上传附件
           if (documentForm.value.attachments.length > 0) {
             // 创建FormData对象用于上传附件
             const attachmentPromises = documentForm.value.attachments.map(async (attachment) => {
               // 如果已经有URL，说明是已上传的附件，跳过
-              if (attachment.url) return;
+              if (attachment.id) return;
               
               // 创建FormData
               const formData = new FormData();
@@ -584,6 +585,7 @@ const submitForm = async () => {
 
                 if (result && result.code === 2000) {
                   console.log('附件上传成功:', attachment.name);
+                  upload_attachmentIds.push(result.data.id);
                 } else {
                   console.error('附件上传失败:', result);
                   ElMessage.warning(`附件 ${attachment.name} 上传失败`);
@@ -596,7 +598,10 @@ const submitForm = async () => {
             
             // 等待所有附件上传完成
             await Promise.all(attachmentPromises);
-            ElMessage.success('所有附件上传完成');
+            if (upload_attachmentIds.length > 0) {
+              ElMessage.success('所有附件上传完成');
+            }
+            
           }
 
           ElMessage.success('保存成功')

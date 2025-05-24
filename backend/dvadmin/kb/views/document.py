@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db import transaction
 from django.db.models import Q
+from dvadmin.utils.json_response import SuccessResponse
 
 from dvadmin.utils.viewset import CustomModelViewSet
 from dvadmin.kb.models import Document, DocumentCategory, DocumentTag, DocumentVersion, DocumentAttachment
@@ -148,7 +149,7 @@ class DocumentViewSet(CustomModelViewSet):
             )
         
         self.perform_update(serializer)
-        return Response(serializer.data)
+        return SuccessResponse(data=serializer.data, msg="获取成功")
     
     @action(detail=True, methods=['post'])
     def increment_view(self, request, pk=None):
