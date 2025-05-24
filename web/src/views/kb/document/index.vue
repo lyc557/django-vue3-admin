@@ -206,8 +206,9 @@
         
         <el-form-item label="附件">
           <el-upload
-            :action="getBaseURL() + apiPrefix +'upload/'"
+            :action="getBaseURL() + '/api/kb/attachment/'"
             :headers="uploadHeaders"
+            :auto-upload="false"
             :on-success="handleUploadSuccess"
             :on-error="handleUploadError"
             :before-upload="beforeUpload"
@@ -551,6 +552,24 @@ const submitForm = async () => {
           await AddObj(formData)
 
         if (res?.code === 2000) {
+
+          const docId = res.data.id
+
+          // 上传附件
+          if (documentForm.value.attachments.length > 0) {
+            const uploadRes = await uploaderRef.value.uploadFiles()
+            if (uploadRes?.code === 2000) {
+              // 上传成功，更新文档的附件信息
+              const attachmentIds = uploadRes.data.map(item => item.id)
+              const updateAttachmentsRes = await updateDocumentAttachments(docId, attachmentIds)
+              if (updateAttachmentsRes?.code !== 2000) {
+                ElMessage.error('上传附件失败')
+                return
+              }
+            }
+          }
+
+
           ElMessage.success('保存成功')
           dialogVisible.value = false
           await fetchDocuments()

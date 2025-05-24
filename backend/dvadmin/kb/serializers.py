@@ -29,10 +29,14 @@ class DocumentCategorySerializer(serializers.ModelSerializer):
 class DocumentAttachmentSerializer(serializers.ModelSerializer):
     """文档附件序列化器"""
     creator_name = serializers.CharField(source='creator.name', read_only=True)
-    
+    creator = serializers.HiddenField(  # 添加隐藏字段配置
+        default=serializers.CurrentUserDefault()
+    )
+
     class Meta:
         model = DocumentAttachment
         fields = '__all__'
+        read_only_fields = ['creator']  # 确保creator为只读
         read_only_fields = ('id', 'create_datetime', 'update_datetime', 'creator_name')
 
 class DocumentVersionSerializer(serializers.ModelSerializer):

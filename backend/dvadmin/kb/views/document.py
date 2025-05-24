@@ -86,8 +86,7 @@ class DocumentViewSet(CustomModelViewSet):
         return queryset
     
     def perform_create(self, serializer):
-        # 设置创建人为当前用户
-        serializer.save(creator=self.request.user)
+        serializer.save(creator=self.request.user)  # 强制设置创建者
 
     @action(methods=['post'], detail=False, url_path='batch-upload')
     def batch_upload(self, request):
@@ -203,6 +202,15 @@ class DocumentAttachmentViewSet(CustomModelViewSet):
     def perform_create(self, serializer):
         # 设置上传人为当前用户
         serializer.save(creator=self.request.user)
+    
+    def create(self, request, *args, **kwargs):
+        """
+        创建文档附件并打印POST参数
+        """
+        print('=== POST 参数 ===')
+        print('请求数据:', request.data)
+        print('请求头:', request.headers)
+        return super().create(request, *args, **kwargs)
 
 class DocumentVersionViewSet(CustomModelViewSet):
     """
