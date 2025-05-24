@@ -17,7 +17,8 @@ class EmbeddingModel:
         self.model = None
         self.embeddings = None
         self.similarity_matrix = None
-        self.model = self.load_embedding_model(local_model_path='/data/models/BAAI/bge-large-zh-v1.5')
+        LOCAL_MODEL_PATH = os.getenv('LOCAL_MODEL_PATH')
+        self.model = self.load_embedding_model(local_model_path=LOCAL_MODEL_PATH)
     
     def setup_environment(self):
         """设置环境变量和代理"""
