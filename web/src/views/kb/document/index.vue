@@ -206,7 +206,7 @@
         
         <el-form-item label="附件">
           <el-upload
-            action="/api/upload"
+            :action="getBaseURL() + 'api/upload/'" 
             :on-success="handleUploadSuccess"
             :on-error="handleUploadError"
             :before-upload="beforeUpload"
@@ -372,7 +372,8 @@ import { MdEditor, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import fileUploader from '/@/components/upload/index.vue'
 import { GetList, AddObj, UpdateObj, GetCategoryList, GetTagList, DelObj } from './api'
-import type { APIResponseData } from '/@/api/interface'
+import { getBaseURL } from '/@/utils/baseUrl';
+
 
 // 表单校验规则
 const formRules = {
