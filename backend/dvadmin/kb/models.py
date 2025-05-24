@@ -89,7 +89,11 @@ class DocumentVersion(CoreModel):
 
 # 文档附件
 class DocumentAttachment(CoreModel):
-    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="attachments", verbose_name="所属文档")
+    document = models.ForeignKey(
+        'Document', 
+        on_delete=models.CASCADE,
+        related_name='document_attachments'  # 确保设置了related_name
+    )
     file = models.FileField(upload_to="document_attachments/%Y/%m/%d/", verbose_name="附件文件")
     name = models.CharField(max_length=200, verbose_name="附件名称")
     file_type = models.CharField(max_length=50, verbose_name="文件类型")

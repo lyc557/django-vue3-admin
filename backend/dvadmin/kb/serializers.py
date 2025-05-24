@@ -68,11 +68,19 @@ class DocumentSerializer(serializers.ModelSerializer):
         required=False,
         default=0
     )
+    attachments = serializers.SerializerMethodField()
+
+
     
     class Meta:
         model = Document
         fields = '__all__'
         read_only_fields = ('id', 'create_datetime', 'update_datetime', 'creator_name', 'category_name', 'tags_info', 'status_display', 'view_count')
+    
+    def get_attachments(self, obj):
+        # 获取关联的附件数据
+        attachments = obj.document_attachments.all()
+        return DocumentAttachmentSerializer(attachments, many=True).data
 
 class DocumentDetailSerializer(DocumentSerializer):
     """文档详情序列化器"""
