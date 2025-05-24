@@ -209,13 +209,12 @@
             :action="getBaseURL() + '/api/kb/attachment/'"
             :headers="uploadHeaders"
             :auto-upload="false"
-            :on-success="handleUploadSuccess"
-            :on-error="handleUploadError"
-            :before-upload="beforeUpload"
             multiple
-            :limit="5"
+            :limit="50"
             :file-list="documentForm.attachments"
             class="attachment-upload"
+            :on-change="handleAttachmentChange" 
+            ref="attachmentUploader"
           >
             <el-button type="primary">
               <el-icon><UploadFilled /></el-icon>
@@ -535,6 +534,7 @@ const submitForm = async () => {
   if (!documentFormRef.value) return
   
   await documentFormRef.value.validate(async (valid) => {
+    // 校验表单
     if (valid) {
       try {
         submitting.value = true
@@ -550,25 +550,50 @@ const submitForm = async () => {
         const res = formData.id ? 
           await UpdateObj(formData) : 
           await AddObj(formData)
-
-        if (res?.code === 2000) {
-
-          const docId = res.data.id
+        console.log('res', res)
+        if (res?.code === 2000) { debugger
+          // 新增成功，获取文档ID
+          const docId = res.data.id 
 
           // 上传附件
           if (documentForm.value.attachments.length > 0) {
-            const uploadRes = await uploaderRef.value.uploadFiles()
-            if (uploadRes?.code === 2000) {
-              // 上传成功，更新文档的附件信息
-              const attachmentIds = uploadRes.data.map(item => item.id)
-              const updateAttachmentsRes = await updateDocumentAttachments(docId, attachmentIds)
-              if (updateAttachmentsRes?.code !== 2000) {
-                ElMessage.error('上传附件失败')
-                return
+            // 创建FormData对象用于上传附件
+            const attachmentPromises = documentForm.value.attachments.map(async (attachment) => {
+              // 如果已经有URL，说明是已上传的附件，跳过
+              if (attachment.url) return;
+              
+              // 创建FormData
+              const formData = new FormData();
+              formData.append('file', attachment.raw); // 原始文件对象
+              formData.append('document_id', docId); // 关联到文档ID
+              
+              try {
+                // 发送上传请求
+                const response = await fetch(getBaseURL() + '/api/kb/attachment/', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': uploadHeaders.Authorization
+                  },
+                  body: formData
+                });
+                
+                const result = await response.json();
+                if (result && result.url) {
+                  console.log('附件上传成功:', attachment.name);
+                } else {
+                  console.error('附件上传失败:', result);
+                  ElMessage.warning(`附件 ${attachment.name} 上传失败`);
+                }
+              } catch (error) {
+                console.error('附件上传异常:', error);
+                ElMessage.warning(`附件 ${attachment.name} 上传失败`);
               }
-            }
+            });
+            
+            // 等待所有附件上传完成
+            await Promise.all(attachmentPromises);
+            ElMessage.success('所有附件上传完成');
           }
-
 
           ElMessage.success('保存成功')
           dialogVisible.value = false
@@ -582,6 +607,8 @@ const submitForm = async () => {
       } finally {
         submitting.value = false
       }
+    }else {
+      ElMessage.error('请检查表单输入')
     }
   })
 }
@@ -801,6 +828,16 @@ const restoreVersion = (history) => {
 
 const uploadHeaders = {
   Authorization: Session.get('token') ? 'JWT ' + Session.get('token') : ''
+}
+
+const handleAttachmentChange = (file, fileList) => {
+  documentForm.value.attachments = fileList.map(item => ({
+    name: item.name,
+    url: item.url || '',
+    status: item.status,
+    uid: item.uid,
+    raw: item.raw // 保存原始文件对象，用于后续上传
+  }))
 }
 
 
