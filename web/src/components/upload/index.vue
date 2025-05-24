@@ -92,11 +92,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { getBaseURL } from '/@/utils/baseUrl'
 import { Session } from '/@/utils/storage'
+
+/**
+ * 定义文件状态类型
+ */
+type FileStatus = 'ready' | 'uploading' | 'success' | 'error'
+
+/**
+ * 定义文件项类型
+ */
+interface FileItem {
+  uid?: string
+  name: string
+  size?: number
+  status?: FileStatus
+  percentage?: number
+  url?: string
+  response?: any
+}
 
 /**
  * 文件上传组件属性定义
@@ -166,6 +184,16 @@ const props = defineProps({
   tipText: {
     type: String,
     default: '支持多种文件格式，单个文件不超过100MB'
+  },
+  // 额外的请求头
+  headers: {
+    type: Object,
+    default: () => ({})
+  },
+  // 额外的请求参数
+  data: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -178,13 +206,14 @@ const emit = defineEmits([
   'upload-success',
   'upload-error',
   'upload-progress',
-  'file-removed'
+  'file-removed',
+  'file-added'
 ])
 
 // 上传组件引用
 const uploadRef = ref(null)
 // 文件列表
-const fileList = ref([])
+const fileList = ref<FileItem[]>([])
 
 /**
  * 监听modelValue变化，同步文件列表
@@ -212,14 +241,15 @@ watch(() => props.modelValue, (newVal) => {
       file.status !== 'success' || newVal.includes(file.url)
     )
   }
-}, { deep: true })
+}, { deep: true, immediate: true })
 
 /**
  * 从URL中提取文件名
  * @param {string} url - 文件URL
  * @returns {string} - 提取的文件名
  */
-const getFileNameFromUrl = (url) => {
+const getFileNameFromUrl = (url: string): string => {
+  if (!url) return '未知文件'
   try {
     return url.substring(url.lastIndexOf('/') + 1)
   } catch (e) {
@@ -232,7 +262,7 @@ const getFileNameFromUrl = (url) => {
  * @param {number} size - 文件大小（字节）
  * @returns {string} - 格式化后的文件大小
  */
-const formatFileSize = (size) => {
+const formatFileSize = (size?: number): string => {
   if (!size) return '未知'
   
   if (size < 1024) {
@@ -249,10 +279,11 @@ const formatFileSize = (size) => {
  * @param {string} status - 文件状态
  * @returns {string} - 对应的类型
  */
-const getStatusType = (status) => {
+const getStatusType = (status?: FileStatus): string => {
   switch (status) {
     case 'success': return 'success'
     case 'error': return 'danger'
+    case 'uploading': return 'primary'
     default: return 'info'
   }
 }
@@ -262,7 +293,7 @@ const getStatusType = (status) => {
  * @param {string} status - 文件状态
  * @returns {string} - 对应的文本
  */
-const getStatusText = (status) => {
+const getStatusText = (status?: FileStatus): string => {
   switch (status) {
     case 'ready': return '待上传'
     case 'uploading': return '上传中'
@@ -273,33 +304,60 @@ const getStatusText = (status) => {
 }
 
 /**
+ * 验证文件类型
+ * @param {File} file - 文件对象
+ * @returns {boolean} - 是否通过验证
+ */
+const validateFileType = (file: File): boolean => {
+  if (!props.accept) return true
+  
+  const fileName = file.name || ''
+  const fileExt = '.' + fileName.split('.').pop()?.toLowerCase()
+  const acceptTypes = props.accept.split(',').map(type => type.trim())
+  
+  // 检查文件扩展名是否在接受列表中
+  return acceptTypes.some(type => {
+    // 处理MIME类型 (如 image/png)
+    if (type.includes('/')) {
+      return file.type.match(type)
+    }
+    // 处理文件扩展名 (如 .png)
+    return type === fileExt || type === '*'
+  })
+}
+
+/**
+ * 验证文件大小
+ * @param {File} file - 文件对象
+ * @returns {boolean} - 是否通过验证
+ */
+const validateFileSize = (file: File): boolean => {
+  const maxBytes = props.maxSize * 1024 * 1024
+  return file.size <= maxBytes
+}
+
+/**
  * 上传前的处理函数
  * @param {File} file - 文件对象
  * @returns {boolean|Promise} - 是否继续上传
  */
-const handleBeforeUpload = (file) => {
-  // 如果提供了自定义的beforeUpload函数，先执行它
-  if (props.beforeUpload) {
-    const result = props.beforeUpload(file)
-    if (result === false || (result instanceof Promise)) {
-      return result
-    }
+const handleBeforeUpload = (file: File) => {
+  // 检查文件类型
+  if (!validateFileType(file)) {
+    const fileExt = '.' + file.name.split('.').pop()?.toLowerCase()
+    ElMessage.error(`不支持的文件类型: ${fileExt}`)
+    return false
   }
   
   // 检查文件大小
-  if (file.size > props.maxSize * 1024 * 1024) {
+  if (!validateFileSize(file)) {
     ElMessage.error(`文件大小不能超过 ${props.maxSize}MB`)
     return false
   }
   
-  // 检查文件类型（如果指定了accept）
-  if (props.accept) {
-    const fileExt = '.' + file.name.split('.').pop().toLowerCase()
-    const acceptTypes = props.accept.split(',')
-    if (!acceptTypes.some(type => type.trim() === fileExt)) {
-      ElMessage.error(`不支持的文件类型: ${fileExt}`)
-      return false
-    }
+  // 如果提供了自定义的beforeUpload函数，执行它
+  if (props.beforeUpload) {
+    return props.beforeUpload(file)
   }
   
   return true
@@ -310,7 +368,7 @@ const handleBeforeUpload = (file) => {
  * @param {Object} options - 上传选项
  * @returns {Object} - 上传控制对象
  */
-const customUploadRequest = (options) => {
+const customUploadRequest = (options: any) => {
   const { file, onProgress, onSuccess, onError } = options
 
   // 设置文件状态为上传中
@@ -322,6 +380,13 @@ const customUploadRequest = (options) => {
 
   const formData = new FormData()
   formData.append('file', file)
+  
+  // 添加额外的数据
+  if (props.data) {
+    Object.keys(props.data).forEach(key => {
+      formData.append(key, props.data[key])
+    })
+  }
 
   const xhr = new XMLHttpRequest()
 
@@ -366,7 +431,21 @@ const customUploadRequest = (options) => {
       // 更新绑定的 v-model
       updateModelValue()
     } else {
-      const err = { status: xhr.status, message: xhr.statusText || '上传失败' }
+      let errMsg = '上传失败'
+      let errResponse
+      
+      try {
+        errResponse = JSON.parse(xhr.responseText)
+        errMsg = errResponse.message || errResponse.detail || errMsg
+      } catch (e) {
+        // 解析失败，使用默认错误信息
+      }
+      
+      const err = { 
+        status: xhr.status, 
+        message: errMsg,
+        response: errResponse
+      }
       
       // 更新文件状态
       const fileIndex = fileList.value.findIndex(item => item.uid === file.uid)
@@ -382,7 +461,7 @@ const customUploadRequest = (options) => {
 
   // 监听错误
   xhr.addEventListener('error', () => {
-    const err = { status: xhr.status, message: '上传失败' }
+    const err = { status: xhr.status, message: '网络错误，上传失败' }
     
     // 更新文件状态
     const fileIndex = fileList.value.findIndex(item => item.uid === file.uid)
@@ -418,6 +497,13 @@ const customUploadRequest = (options) => {
   if (token) {
     xhr.setRequestHeader('Authorization', 'JWT ' + token)
   }
+  
+  // 添加自定义请求头
+  if (props.headers) {
+    Object.keys(props.headers).forEach(key => {
+      xhr.setRequestHeader(key, props.headers[key])
+    })
+  }
 
   xhr.send(formData)
 
@@ -440,16 +526,17 @@ const customUploadRequest = (options) => {
  * 更新modelValue值
  */
 const updateModelValue = () => {
-  // 确保fileList.value存在且是数组
-  if (fileList.value && Array.isArray(fileList.value)) {
-    const successFiles = fileList.value
-      .filter(file => file.status === 'success' && file.url)
-      .map(file => file.url)
-    
-    emit('update:modelValue', successFiles)
-  } else {
+  // 防御性检查，确保fileList.value存在且是数组
+  if (!fileList.value || !Array.isArray(fileList.value)) {
     emit('update:modelValue', [])
+    return
   }
+  
+  const successFiles = fileList.value
+    .filter(file => file.status === 'success' && file.url)
+    .map(file => file.url)
+  
+  emit('update:modelValue', successFiles)
 }
 
 /**
@@ -457,7 +544,7 @@ const updateModelValue = () => {
  * @param {Array} files - 选择的文件
  * @param {Array} uploadFiles - 已上传的文件
  */
-const handleExceed = (files, uploadFiles) => {
+const handleExceed = (files: File[], uploadFiles: any[]) => {
   ElMessage.warning(`最多只能上传 ${props.limit} 个文件，本次选择了 ${files.length} 个文件，共超出 ${files.length + uploadFiles.length - props.limit} 个文件`)
 }
 
@@ -466,7 +553,7 @@ const handleExceed = (files, uploadFiles) => {
  * @param {Object} file - 变化的文件
  * @param {Array} uploadFiles - 所有文件
  */
-const handleFileChange = (file, uploadFiles) => {
+const handleFileChange = (file: any, uploadFiles: any[]) => {
   // 设置文件状态为ready
   if (file.status === 'ready') {
     // 检查文件是否已存在
@@ -479,6 +566,9 @@ const handleFileChange = (file, uploadFiles) => {
       }
       return
     }
+    
+    // 触发文件添加事件
+    emit('file-added', file)
   }
   
   // 同步上传文件列表到组件内部的fileList
@@ -489,7 +579,7 @@ const handleFileChange = (file, uploadFiles) => {
  * 移除文件
  * @param {Object} file - 要移除的文件
  */
-const handleRemoveFile = (file) => {
+const handleRemoveFile = (file: any) => {
   // 从文件列表中移除
   fileList.value = fileList.value.filter(item => item !== file)
   
@@ -526,6 +616,17 @@ const clearFiles = () => {
 }
 
 /**
+ * 获取当前上传状态
+ */
+const getUploadStatus = computed(() => {
+  if (!fileList.value || fileList.value.length === 0) return 'empty'
+  if (fileList.value.some(file => file.status === 'uploading')) return 'uploading'
+  if (fileList.value.some(file => file.status === 'error')) return 'error'
+  if (fileList.value.every(file => file.status === 'success')) return 'success'
+  return 'ready'
+})
+
+/**
  * 组件挂载时初始化
  */
 onMounted(() => {
@@ -539,7 +640,9 @@ onMounted(() => {
 defineExpose({
   submitUpload,
   clearFiles,
-  uploadRef
+  uploadRef,
+  fileList,
+  getUploadStatus
 })
 </script>
 
