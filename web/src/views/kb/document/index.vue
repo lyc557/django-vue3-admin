@@ -238,7 +238,6 @@
       </el-form>
       
       <fileUploader
-        v-model="uploadedFiles"
         :upload-url="'/api/kb/document/batch-upload/'"
         :multiple="true"
         :drag="true"
@@ -265,7 +264,6 @@ import fileUploader from '/@/components/upload/index.vue'
 import { GetList, AddObj, UpdateObj, GetCategoryList, GetTagList, DelObj } from './api'
 import type { APIResponseData } from '/@/api/interface'
 
-const uploadedFiles = ref([])
 // 表单校验规则
 const formRules = {
   title: [
