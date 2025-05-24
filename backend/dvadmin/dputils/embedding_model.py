@@ -49,8 +49,9 @@ class EmbeddingModel:
                 logger.info(f"从本地路径加载模型: {local_model_path}")
                 model = SentenceTransformer(local_model_path)
             else:
-                model = SentenceTransformer(model_name)
-            logger.info(f"成功加载模型: {model_name}")
+                logger.error(f"未找到本地模型路径: {local_model_path}")
+                return None
+            logger.info(f"成功加载模型: {local_model_path}")
             return model
         except Exception as e:
             logger.error(f"模型加载失败: {e}")
