@@ -551,7 +551,7 @@ const submitForm = async () => {
           await UpdateObj(formData) : 
           await AddObj(formData)
         console.log('res', res)
-        if (res?.code === 2000) { debugger
+        if (res?.code === 2000) { 
           // 新增成功，获取文档ID
           const docId = res.data.id 
 
@@ -565,7 +565,10 @@ const submitForm = async () => {
               // 创建FormData
               const formData = new FormData();
               formData.append('file', attachment.raw); // 原始文件对象
-              formData.append('document_id', docId); // 关联到文档ID
+              formData.append('document', docId); // 关联到文档ID
+              formData.append('name', attachment.name); // 附件名称
+              formData.append('file_type', attachment.raw.type || ''); // 文件类型
+              formData.append('file_size', attachment.raw.size); // 文件大小
               
               try {
                 // 发送上传请求
@@ -578,7 +581,8 @@ const submitForm = async () => {
                 });
                 
                 const result = await response.json();
-                if (result && result.url) {
+
+                if (result && result.code === 2000) {
                   console.log('附件上传成功:', attachment.name);
                 } else {
                   console.error('附件上传失败:', result);
